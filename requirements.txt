@@ -1,24 +1,45 @@
-fastapi==0.109.00
+﻿# Core FastAPI
+fastapi==0.109.0
 uvicorn[standard]==0.27.0
+
+# Database
 sqlalchemy==2.0.25
 asyncpg==0.29.0
+alembic==1.13.1
+
+# Validation
 pydantic==2.5.3
 pydantic-settings==2.1.0
+
+# Authentication
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+
+# File handling
 python-multipart==0.0.6
 aiofiles==23.2.1
+
+# Cache
 redis==5.0.1
+
+# Background tasks
 celery==5.3.6
+
+# External services
 stripe==7.12.0
 resend==0.7.0
 openai==1.10.0
+
+# WebSocket
 websockets==12.0
+
+# Geographic (Updated versions)
 geoalchemy2==0.14.3
 shapely==2.0.6
+
+# Utils
 python-dotenv==1.0.0
-alembic==1.13.1
 httpx==0.26.0
-pillow==10.4.0
-firebase-admin==6.4.0
-twilio==8.13.0
+
+# Image processing (Updated for Python 3.13)
+pillow>=10.3.0
