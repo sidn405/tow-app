@@ -19,6 +19,6 @@ shapely==2.0.2
 python-dotenv==1.0.0
 alembic==1.13.1
 httpx==0.26.0
-pillow==10.2.0
+pillow==10.4.0
 firebase-admin==6.4.0
 twilio==8.13.0
