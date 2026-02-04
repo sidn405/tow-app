@@ -14,9 +14,9 @@ source = "."
 [services.envs]
 DATABASE_URL = { ref = "DATABASE_URL" }
 REDIS_URL = { $ref = "REDIS_URL" }
-STRIPE_SECRET_KEY = { $ref = "STRIPE_SECRET_KEY" }
+STRIPE_SECRET_KEY = { ref = "STRIPE_SECRET_KEY" }
 RESEND_API_KEY = { ref = "RESEND_API_KEY" }
-OPENAI_API_KEY = { $ref = "OPENAI_API_KEY" }
+OPENAI_API_KEY = { ref = "OPENAI_API_KEY" }
 
 [[services]]
 name = "worker"
