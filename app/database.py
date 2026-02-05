@@ -7,6 +7,7 @@ from typing import Optional
 
 # Database engine
 engine = create_async_engine(
+    normalize_db_url(settings.DATABASE_URL),
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     poolclass=NullPool,
@@ -25,6 +26,14 @@ Base = declarative_base()
 
 # ---- Redis (DO NOT CONNECT AT IMPORT TIME) ----
 redis_client: Optional[redis.Redis] = None
+
+def normalize_db_url(url: str) -> str:
+    url = (url or "").strip()
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return url
 
 def _normalize_redis_url(url: str) -> str:
     url = (url or "").strip()
