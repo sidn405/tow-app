@@ -3,6 +3,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool
 from app.config import settings
 import redis.asyncio as redis
+from typing import Optional
 
 # Database engine
 engine = create_async_engine(
@@ -22,39 +23,66 @@ async_session_maker = async_sessionmaker(
 # Base class for models
 Base = declarative_base()
 
-# Redis connection
-import redis.asyncio as redis
-from typing import Optional
-
+# ---- Redis (DO NOT CONNECT AT IMPORT TIME) ----
 redis_client: Optional[redis.Redis] = None
 
 def _normalize_redis_url(url: str) -> str:
     url = (url or "").strip()
     if url.startswith(("redis://", "rediss://", "unix://")):
         return url
-    # if user accidentally set HOST:PORT[/db], fix it
+    # If someone set HOST:PORT[/db], prepend scheme
     if url and "://" not in url:
         return f"redis://{url}"
     return url
 
-async def init_redis():
+async def init_redis() -> None:
+    """Initialize Redis client (called on startup)."""
     global redis_client
     url = _normalize_redis_url(settings.REDIS_URL)
 
     if not url.startswith(("redis://", "rediss://", "unix://")):
         raise ValueError(
-            f"Invalid REDIS_URL: {url!r}. Must start with redis://, rediss://, or unix://"
+            f"REDIS_URL must start with redis://, rediss://, or unix://. Got: {url!r}"
         )
 
     redis_client = redis.from_url(url, decode_responses=True)
-    # Fail fast with a clear reason if creds/network are wrong
+    # Fail fast if creds/host are wrong
     await redis_client.ping()
 
-async def close_redis():
+async def close_redis() -> None:
+    """Close Redis client (called on shutdown)."""
     global redis_client
     if redis_client is not None:
-        await redis_client.close()
+        await redis_client.aclose()  # aclose() is preferred in recent redis-py
         redis_client = None
 
+# ---- Dependencies ----
+async def get_db():
+    """Dependency for getting database sessions"""
+    async with async_session_maker() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
 async def get_redis():
+    """Dependency for getting Redis client"""
+    if redis_client is None:
+        # Optional: auto-init here, but better to init on startup
+        raise RuntimeError("Redis not initialized. Did you call init_redis() on startup?")
     return redis_client
+
+# ---- Lifecycle ----
+async def init_db():
+    """Initialize database tables"""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def close_db():
+    """Close database connections"""
+    await engine.dispose()
+    await close_redis()
