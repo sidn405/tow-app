@@ -23,30 +23,38 @@ async_session_maker = async_sessionmaker(
 Base = declarative_base()
 
 # Redis connection
-redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+import redis.asyncio as redis
+from typing import Optional
 
-async def get_db():
-    """Dependency for getting database sessions"""
-    async with async_session_maker() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+redis_client: Optional[redis.Redis] = None
+
+def _normalize_redis_url(url: str) -> str:
+    url = (url or "").strip()
+    if url.startswith(("redis://", "rediss://", "unix://")):
+        return url
+    # if user accidentally set HOST:PORT[/db], fix it
+    if url and "://" not in url:
+        return f"redis://{url}"
+    return url
+
+async def init_redis():
+    global redis_client
+    url = _normalize_redis_url(settings.REDIS_URL)
+
+    if not url.startswith(("redis://", "rediss://", "unix://")):
+        raise ValueError(
+            f"Invalid REDIS_URL: {url!r}. Must start with redis://, rediss://, or unix://"
+        )
+
+    redis_client = redis.from_url(url, decode_responses=True)
+    # Fail fast with a clear reason if creds/network are wrong
+    await redis_client.ping()
+
+async def close_redis():
+    global redis_client
+    if redis_client is not None:
+        await redis_client.close()
+        redis_client = None
 
 async def get_redis():
-    """Dependency for getting Redis client"""
     return redis_client
-
-async def init_db():
-    """Initialize database tables"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-async def close_db():
-    """Close database connections"""
-    await engine.dispose()
-    await redis_client.close()

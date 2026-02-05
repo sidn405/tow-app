@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from app.config import settings
-from app.database import init_db, close_db
+from app.database import init_db, close_db, init_redis
 from app.api.v1 import auth, drivers, tow_requests, websocket
 import logging
 
@@ -27,6 +27,15 @@ app = FastAPI(
     version=settings.APP_VERSION,
     lifespan=lifespan
 )
+
+@app.on_event("startup")
+async def startup():
+    await init_db()
+    await init_redis()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await close_db()
 
 # CORS middleware
 app.add_middleware(
