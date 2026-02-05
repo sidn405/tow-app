@@ -5,6 +5,14 @@ from app.config import settings
 import redis.asyncio as redis
 from typing import Optional
 
+def normalize_db_url(url: str) -> str:
+    url = (url or "").strip()
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return url
+
 # Database engine
 engine = create_async_engine(
     normalize_db_url(settings.DATABASE_URL),
