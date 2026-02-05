@@ -10,6 +10,7 @@ alembic==1.13.1
 # Validation
 pydantic==2.5.3
 pydantic-settings==2.1.0
+pydantic[email]
 
 # Authentication
 python-jose[cryptography]==3.3.0
@@ -43,3 +44,4 @@ httpx==0.26.0
 
 # Image processing (Updated for Python 3.13)
 pillow>=10.3.0
+
