@@ -16,7 +16,6 @@ def normalize_db_url(url: str) -> str:
 # Database engine
 engine = create_async_engine(
     normalize_db_url(settings.DATABASE_URL),
-    settings.DATABASE_URL,
     echo=settings.DEBUG,
     poolclass=NullPool,
     future=True
