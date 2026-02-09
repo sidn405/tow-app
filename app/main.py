@@ -74,14 +74,6 @@ app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(drivers.router, prefix=settings.API_V1_PREFIX)
 app.include_router(tow_requests.router, prefix=settings.API_V1_PREFIX)
 app.include_router(websocket.router)
-
-@app.get("/")
-async def root():
-    return {
-        "message": "TowTruck Platform API",
-        "version": settings.APP_VERSION,
-        "docs": "/docs"
-    }
     
 # Then mount static files at the end
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "out")
