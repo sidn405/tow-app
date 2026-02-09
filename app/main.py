@@ -78,10 +78,10 @@ app.include_router(websocket.router)
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "out")
 
 if os.path.exists(frontend_path):
-    # Serve _next static files
-    next_static_path = os.path.join(frontend_path, "_next", "static")
-    if os.path.exists(next_static_path):
-        app.mount("/_next/static", StaticFiles(directory=next_static_path), name="next-static-files")
+    # Mount _next directory (not just _next/static)
+    next_path = os.path.join(frontend_path, "_next")
+    if os.path.exists(next_path):
+        app.mount("/_next", StaticFiles(directory=next_path), name="next-assets")
     
     # Serve all other Next.js files
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
