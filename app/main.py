@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+import os
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import init_db, close_db, init_redis
@@ -40,7 +42,10 @@ async def shutdown():
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://tow-app-production-38dc.up.railway.app"],  # Configure appropriately for production
+    allow_origins=[
+        "http://localhost:8000",
+        "https://tow-app-production-38dc.up.railway.app",  # Your new URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -77,6 +82,11 @@ async def root():
         "version": settings.APP_VERSION,
         "docs": "/docs"
     }
+    
+# Then mount static files at the end
+frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "out")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
