@@ -144,35 +144,60 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting Application...';
             
-            const formData = {
+            const userData = {
                 first_name: document.getElementById('firstName').value,
                 last_name: document.getElementById('lastName').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
-                license_number: document.getElementById('licenseNumber').value,
-                vehicle_type: document.getElementById('vehicleType').value,
-                password: password
+                password: password,
+                role: 'driver'
             };
             
             try {
-                const response = await fetch('/api/v1/drivers/register', {
+                // Step 1: Register as user
+                const registerResponse = await fetch('/api/v1/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(userData)
                 });
                 
-                const data = await response.json();
+                const registerData = await registerResponse.json();
                 
-                if (response.ok) {
-                    alert('Application submitted successfully! You can now sign in.');
-                    if (data.access_token) {
-                        localStorage.setItem('auth_token', data.access_token);
+                if (registerResponse.ok) {
+                    // Store token
+                    localStorage.setItem('auth_token', registerData.access_token);
+                    
+                    // Step 2: Apply as driver
+                    const driverData = {
+                        license_number: document.getElementById('licenseNumber').value,
+                        license_state: 'CA',
+                        license_expiry: '2030-12-31',
+                        company_name: null,
+                        company_ein: null
+                    };
+                    
+                    const driverResponse = await fetch('/api/v1/drivers/apply', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${registerData.access_token}`
+                        },
+                        body: JSON.stringify(driverData)
+                    });
+                    
+                    if (driverResponse.ok) {
+                        alert('Driver application submitted successfully!');
+                        window.location.href = 'driver-dashboard.html';
+                    } else {
+                        const driverError = await driverResponse.json();
+                        alert(driverError.detail || 'Error submitting driver application.');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Apply to Drive';
                     }
-                    window.location.href = 'driver-dashboard.html';
                 } else {
-                    alert(data.detail || 'Error submitting application. Please try again.');
+                    alert(registerData.detail || 'Error creating account. Please try again.');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Apply to Drive';
                 }
