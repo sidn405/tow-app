@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard - TowNow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span class="text-2xl font-bold text-gray-900">TowNow Driver</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleOnline()" id="onlineToggle" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold">
+                        Go Online
+                    </button>
+                    <span class="text-gray-700" id="userName">Loading...</span>
+                    <button onclick="logout()" class="text-gray-600 hover:text-gray-900">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="text-sm text-gray-600 mb-1">Today's Earnings</div>
+                <div class="text-2xl font-bold text-gray-900" id="todayEarnings">$0.00</div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="text-sm text-gray-600 mb-1">This Week</div>
+                <div class="text-2xl font-bold text-gray-900" id="weekEarnings">$0.00</div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="text-sm text-gray-600 mb-1">This Month</div>
+                <div class="text-2xl font-bold text-gray-900" id="monthEarnings">$0.00</div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="text-sm text-gray-600 mb-1">Total Tows</div>
+                <div class="text-2xl font-bold text-gray-900" id="totalTows">0</div>
+            </div>
+        </div>
+
+        <!-- Available Requests -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6">Available Tow Requests</h2>
+            
+            <div id="requestsList">
+                <div class="text-center text-gray-500 py-8">
+                    <p>Go online to see available tow requests</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Tow -->
+        <div id="activeTowSection" class="bg-white rounded-lg shadow-lg p-8 mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Active Tow</h2>
+            
+            <div id="activeTowDetails" class="space-y-4">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Completed Tows -->
+        <div class="bg-white rounded-lg shadow-sm p-8">
+            <h2 class="text-2xl font-bold mb-6">Recent Completed Tows</h2>
+            <div id="completedTows" class="text-gray-500">
+                <p>No completed tows yet</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = 'driver-login.html';
+        }
+
+        let isOnline = false;
+
+        // Load profile
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('userName').textContent = data.first_name || data.email;
+                } else {
+                    console.error('Failed to load profile');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        // Toggle online status
+        async function toggleOnline() {
+            isOnline = !isOnline;
+            const button = document.getElementById('onlineToggle');
+            
+            if (isOnline) {
+                button.textContent = 'Go Offline';
+                button.className = 'px-4 py-2 bg-green-600 text-white rounded-lg font-semibold';
+                loadAvailableRequests();
+            } else {
+                button.textContent = 'Go Online';
+                button.className = 'px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold';
+                document.getElementById('requestsList').innerHTML = '<div class="text-center text-gray-500 py-8"><p>Go online to see available tow requests</p></div>';
+            }
+
+            try {
+                await fetch('/api/v1/drivers/online-status', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ online: isOnline })
+                });
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        // Load available requests
+        async function loadAvailableRequests() {
+            if (!isOnline) return;
+
+            try {
+                const response = await fetch('/api/v1/drivers/available-requests', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const requests = await response.json();
+                    displayRequests(requests);
+                }
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        }
+
+        // Display requests
+        function displayRequests(requests) {
+            const container = document.getElementById('requestsList');
+            
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-8"><p>No available requests at the moment</p></div>';
+                return;
+            }
+
+            container.innerHTML = requests.map(req => `
+                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <div class="font-semibold text-gray-900">${req.vehicle_type}</div>
+                            <div class="text-sm text-gray-600">${req.pickup_location}</div>
+                            <div class="text-sm text-gray-600">→ ${req.dropoff_location}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold text-green-600">$${req.estimated_price}</div>
+                            <div class="text-sm text-gray-500">${req.distance} miles</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="acceptRequest(${req.id})" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                            Accept
+                        </button>
+                        <button onclick="declineRequest(${req.id})" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                            Decline
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Accept request
+        async function acceptRequest(requestId) {
+            try {
+                const response = await fetch('/api/v1/drivers/accept-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ request_id: requestId })
+                });
+                
+                if (response.ok) {
+                    alert('Request accepted! Customer has been notified.');
+                    loadAvailableRequests();
+                } else {
+                    alert('Failed to accept request');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error');
+            }
+        }
+
+        // Decline request
+        async function declineRequest(requestId) {
+            loadAvailableRequests();
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_type');
+            window.location.href = 'index.html';
+        }
+
+        // Load profile on page load
+        loadProfile();
+
+        // Refresh requests every 30 seconds when online
+        setInterval(() => {
+            if (isOnline) {
+                loadAvailableRequests();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

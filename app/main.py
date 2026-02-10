@@ -75,15 +75,8 @@ app.include_router(drivers.router, prefix=settings.API_V1_PREFIX)
 app.include_router(tow_requests.router, prefix=settings.API_V1_PREFIX)
 app.include_router(websocket.router)
     
-frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "out")
-
+frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_path):
-    # Mount _next directory (not just _next/static)
-    next_path = os.path.join(frontend_path, "_next")
-    if os.path.exists(next_path):
-        app.mount("/_next", StaticFiles(directory=next_path), name="next-assets")
-    
-    # Serve all other Next.js files
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 if __name__ == "__main__":
