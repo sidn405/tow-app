@@ -8,15 +8,14 @@ from app.config import settings
 from app.models import User
 from uuid import UUID
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt_sha256", "bcrypt"],
+    deprecated="auto",
+)
 
 class AuthService:
     @staticmethod
     def hash_password(password: str) -> str:
-        # Bcrypt has a 72-byte limit, truncate if needed
-        password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            password = password_bytes[:72].decode('utf-8', errors='ignore')
         return pwd_context.hash(password)
     
     @staticmethod
