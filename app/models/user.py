@@ -29,11 +29,22 @@ class User(Base):
     
     # Relationships
     driver_profile = relationship("Driver", back_populates="user", uselist=False)
-    tow_requests_as_customer = relationship("TowRequest", foreign_keys="TowRequest.customer_id", back_populates="customer")
-    tow_requests_as_driver = relationship("TowRequest", foreign_keys="TowRequest.driver_id", back_populates="driver")
+    tow_requests_as_customer = relationship(
+        "TowRequest",
+        foreign_keys="[TowRequest.customer_id]",
+        back_populates="customer"
+    )
+    
+    tow_requests_as_driver = relationship(
+        "TowRequest",
+        primaryjoin="User.id==TowRequest.driver_id",
+        back_populates="driver",
+        foreign_keys="[TowRequest.driver_id]"
+    )
     notifications = relationship("Notification", back_populates="user")
     support_tickets = relationship("SupportTicket", back_populates="user")
     
     @property
     def full_name(self):
+        
         return f"{self.first_name} {self.last_name}".strip()
