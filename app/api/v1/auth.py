@@ -8,6 +8,7 @@ from app.schemas.user import (
     UserCreate, UserLogin, UserResponse, TokenResponse,
     PasswordResetRequest, PasswordReset
 )
+from app.dependencies import get_current_user, get_current_customer, get_current_driver
 from app.services.auth_service import AuthService
 from app.services.notification_service import NotificationService
 from app.models import User
@@ -68,6 +69,13 @@ async def register(
         refresh_token=refresh_token,
         user=UserResponse.from_orm(user)
     )
+    
+@router.get("/me", response_model=UserResponse)
+async def get_current_user(
+    current_user: User = Depends(get_current_user)
+):
+    """Get current user profile"""
+    return current_user
 
 @router.post("/login", response_model=TokenResponse)
 async def login(

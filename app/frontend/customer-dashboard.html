@@ -29,27 +29,28 @@
     </script>
 </head>
 <body class="bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-2">
+                <a href="index.html" class="flex items-center space-x-2">
                     <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
                     <span class="text-2xl font-bold text-gray-900">TowNow</span>
-                </div>
+                </a>
                 <div class="flex items-center space-x-4">
                     <span class="text-gray-700" id="userName">Loading...</span>
-                    <button onclick="logout()" class="text-gray-600 hover:text-gray-900">
+                    <button onclick="logout()" class="text-gray-600 hover:text-gray-900 flex items-center space-x-1">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                         </svg>
+                        <span class="hidden md:inline">Sign Out</span>
                     </button>
                 </div>
             </div>
         </div>
-    </header>
+    </nav>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Section -->
@@ -116,13 +117,57 @@
         </div>
 
         <!-- Recent Tows -->
-        <div class="bg-white rounded-lg shadow-sm p-8">
+        <div class="bg-white rounded-lg shadow-sm p-8 mb-8">
             <h2 class="text-2xl font-bold mb-6">Recent Tows</h2>
             <div id="towHistory" class="text-gray-500">
                 <p>No tows yet. Request your first tow above!</p>
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <svg class="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span class="text-xl font-bold text-white">TowNow</span>
+                    </div>
+                    <p class="text-sm">On-demand towing service. Available 24/7 on web and mobile.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-white mb-4">For Customers</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="customer-dashboard.html" class="hover:text-primary-400">Dashboard</a></li>
+                        <li><a href="index.html#pricing" class="hover:text-primary-400">Pricing</a></li>
+                        <li><a href="index.html#how-it-works" class="hover:text-primary-400">How It Works</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Support</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-primary-400">Help Center</a></li>
+                        <li><a href="#" class="hover:text-primary-400">Contact Us</a></li>
+                        <li><a href="#" class="hover:text-primary-400">FAQs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-primary-400">About Us</a></li>
+                        <li><a href="#" class="hover:text-primary-400">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-primary-400">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+                <p>&copy; 2026 TowNow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script>
         // Check if user is logged in
