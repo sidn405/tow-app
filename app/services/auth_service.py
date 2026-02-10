@@ -13,7 +13,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class AuthService:
     @staticmethod
     def hash_password(password: str) -> str:
-        """Hash a password"""
+        # Bcrypt has a 72-byte limit, truncate if needed
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
         return pwd_context.hash(password)
     
     @staticmethod
