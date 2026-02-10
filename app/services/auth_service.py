@@ -9,7 +9,7 @@ from app.models import User
 from uuid import UUID
 
 pwd_context = CryptContext(
-    schemes=["bcrypt_sha256", "bcrypt"],
+    schemes=["argon2", "bcrypt"],
     deprecated="auto",
 )
 
