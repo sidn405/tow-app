@@ -30,14 +30,24 @@ class User(Base):
     
     # Relationships
     driver_profile = relationship("Driver", back_populates="user", uselist=False)
+    
     tow_requests_as_customer = relationship(
         "TowRequest",
         foreign_keys="[TowRequest.customer_id]",
         back_populates="customer"
     )
     
-    notifications = relationship("Notification", back_populates="user")
-    support_tickets = relationship("SupportTicket", back_populates="user")
+    notifications = relationship(
+        "Notification", 
+        foreign_keys="[Notification.user_id]",  # Add this!
+        back_populates="user"
+    )
+    
+    support_tickets = relationship(
+        "SupportTicket", 
+        foreign_keys="[SupportTicket.user_id]",  # Add this!
+        back_populates="user"
+    )
     
     @property
     def full_name(self):
