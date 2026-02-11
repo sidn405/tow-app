@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime, Text, Enum as SQLEnum
+from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime, Text, Enum as SQLEnum, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -35,6 +35,14 @@ class TowRequest(Base):
     service_type_id = Column(UUID(as_uuid=True), ForeignKey("service_types.id"))
     vehicle_type_id = Column(UUID(as_uuid=True), ForeignKey("customer_vehicle_types.id"))
     tow_reason_id = Column(UUID(as_uuid=True), ForeignKey("tow_reasons.id"))
+    # Add these new fields:
+    vehicle_year = Column(Integer)
+    vehicle_make = Column(String(100))
+    vehicle_model = Column(String(100))
+    vehicle_type = Column(String(50))  # sedan, suv, luxury, exotic, etc.
+    is_awd = Column(Boolean, default=False)
+    is_lowered = Column(Boolean, default=False)
+    is_damaged = Column(Boolean, default=False)
     
     # Location details
     pickup_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)

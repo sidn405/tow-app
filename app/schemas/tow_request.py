@@ -26,20 +26,23 @@ class TowQuoteResponse(BaseModel):
     breakdown: dict
 
 class TowRequestCreate(BaseModel):
-    pickup_location: LocationPoint
-    pickup_address: str
-    pickup_notes: Optional[str] = None
-    dropoff_location: LocationPoint
-    dropoff_address: str
-    dropoff_notes: Optional[str] = None
-    service_type_id: UUID
-    vehicle_type_id: UUID
-    tow_reason_id: UUID
-    vehicle_make: Optional[str] = None
-    vehicle_model: Optional[str] = None
-    vehicle_year: Optional[int] = None
+    
+    vehicle_year: int = Field(..., ge=1900, le=2026)
+    vehicle_make: str = Field(..., min_length=1, max_length=100)
+    vehicle_model: str = Field(..., min_length=1, max_length=100)
+    vehicle_type: str  # sedan, suv, luxury, exotic, motorcycle, rv, large_truck
     vehicle_color: Optional[str] = None
     license_plate: Optional[str] = None
+    is_awd: bool = False
+    is_lowered: bool = False
+    is_damaged: bool = False
+    pickup_location: str
+    dropoff_location: str
+    reason: str   
+    dropoff_notes: Optional[str] = None
+    service_type_id: UUID
+    vehicle_type_id: UUID    
+    pickup_notes: Optional[str] = None
 
 class TowRequestResponse(BaseModel):
     id: UUID
@@ -48,6 +51,13 @@ class TowRequestResponse(BaseModel):
     service_type_id: UUID
     vehicle_type_id: UUID
     tow_reason_id: UUID
+    vehicle_year: int
+    vehicle_make: str
+    vehicle_model: str
+    vehicle_type: str
+    is_awd: bool
+    is_lowered: bool
+    is_damaged: bool
     pickup_address: str
     dropoff_address: str
     distance_miles: Optional[Decimal]
