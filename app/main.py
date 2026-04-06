@@ -68,6 +68,10 @@ async def health_check():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION
     }
+    
+@app.get("/api/v1/config/mapbox-token")
+async def get_mapbox_token():
+    return {"mapbox_token": settings.MAPBOX_PUBLIC_TOKEN}
 
 # Include routers
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)

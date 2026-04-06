@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str
     
+    # Mapbox
+    MAPBOX_PUBLIC_TOKEN: str
+    
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
