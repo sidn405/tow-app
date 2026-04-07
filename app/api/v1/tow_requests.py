@@ -71,14 +71,14 @@ async def get_tow_quote(
 async def create_simple_tow_request(
     request: SimpleTowRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)  # ← Make sure it's AsyncSession
 ):
     """Create tow request from simple frontend format"""
     from app.services.tow_request_mapper import TowRequestMapper
     
     try:
         mapper = TowRequestMapper(db)
-        mapped_data = mapper.map_request(request.dict())
+        mapped_data = await mapper.map_request(request.dict())  # ← Add await here!
         
         return {
             "success": True,
