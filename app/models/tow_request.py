@@ -1,3 +1,4 @@
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime, Text, Enum as SQLEnum, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -6,6 +7,35 @@ from geoalchemy2 import Geography
 import uuid
 import enum
 from app.database import Base
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.services.tow_request_mapper import TowRequestMapper
+from app.models import User
+from app.api.v1.auth import get_current_user
+from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
+
+router = APIRouter(prefix="/api/v1/tows", tags=["tows"])
+
+# Add this schema
+class SimpleTowRequest(BaseModel):
+    """Frontend sends simple string data"""
+    vehicle_year: int = Field(..., ge=1900, le=2026)
+    vehicle_make: str
+    vehicle_model: str
+    vehicle_type: str  # sedan, luxury, exotic, etc.
+    is_awd: bool = False
+    is_lowered: bool = False
+    is_damaged: bool = False
+    pickup_location: str  # Address as string
+    dropoff_location: str  # Address as string
+    reason: str  # breakdown, accident, relocation, etc.
+    vehicle_color: Optional[str] = None
+    license_plate: Optional[str] = None
+    pickup_notes: Optional[str] = None
+    dropoff_notes: Optional[str] = None
+
 
 class TowStatus(str, enum.Enum):
     PENDING = "pending"
@@ -98,3 +128,24 @@ class TowRequest(Base):
     tow_reason = relationship("TowReason")
     offers = relationship("TowRequestOffer", back_populates="tow_request")
     location_history = relationship("LocationHistory", back_populates="tow_request")
+
+@router.post("/request-simple")
+async def create_simple_tow_request(
+    request: SimpleTowRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create tow request from simple frontend format"""
+    
+    # Convert simple format to database UUIDs
+    mapper = TowRequestMapper(db)
+    mapped_data = mapper.map_request(request.dict())
+    
+    # TODO: Create tow request in database using mapped_data
+    # For now, just return success
+    
+    return {
+        "message": "Tow request received",
+        "estimated_price": 125.00,  # Placeholder
+        **mapped_data
+    }
