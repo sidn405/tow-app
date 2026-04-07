@@ -1,10 +1,11 @@
 """
-Tow Request Mapper Service
+Tow Request Mapper Service - ASYNC VERSION
 Converts simple frontend format to database UUID format
 Place this in: app/services/tow_request_mapper.py
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Dict, Any
 import uuid
 
@@ -35,10 +36,10 @@ class TowRequestMapper:
         "other": "other"
     }
     
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
     
-    def map_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def map_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Convert simple frontend format to database format with UUIDs.
         
@@ -50,19 +51,19 @@ class TowRequestMapper:
         """
         # Get vehicle type from simple string
         vehicle_type_str = request_data.get("vehicle_type", "sedan")
-        vehicle_type_id = self._get_vehicle_type_id(vehicle_type_str)
+        vehicle_type_id = await self._get_vehicle_type_id(vehicle_type_str)
         
         # Get tow reason from simple string
         reason_str = request_data.get("reason", "other")
-        tow_reason_id = self._get_tow_reason_id(reason_str)
+        tow_reason_id = await self._get_tow_reason_id(reason_str)
         
         # Determine service type based on vehicle requirements
-        service_type_id = self._determine_service_type(request_data)
+        service_type_id = await self._determine_service_type(request_data)
         
         return {
-            "vehicle_type_id": vehicle_type_id,
-            "tow_reason_id": tow_reason_id,
-            "service_type_id": service_type_id,
+            "vehicle_type_id": str(vehicle_type_id),
+            "tow_reason_id": str(tow_reason_id),
+            "service_type_id": str(service_type_id),
             "vehicle_make": request_data.get("vehicle_make"),
             "vehicle_model": request_data.get("vehicle_model"),
             "vehicle_year": request_data.get("vehicle_year"),
@@ -81,7 +82,7 @@ class TowRequestMapper:
             "dropoff_notes": request_data.get("dropoff_notes"),
         }
     
-    def _get_vehicle_type_id(self, vehicle_type: str) -> uuid.UUID:
+    async def _get_vehicle_type_id(self, vehicle_type: str) -> uuid.UUID:
         """Get vehicle type UUID from lookup table"""
         from app.models import CustomerVehicleType
         
@@ -89,17 +90,20 @@ class TowRequestMapper:
         normalized = vehicle_type.lower().strip()
         db_value = self.VEHICLE_TYPE_MAP.get(normalized, "sedan")
         
-        # Query the database for the UUID
-        vehicle_type_obj = self.db.query(CustomerVehicleType).filter(
-            CustomerVehicleType.type_name == db_value
-        ).first()
+        # Query the database for the UUID using async select
+        result = await self.db.execute(
+            select(CustomerVehicleType).filter(
+                CustomerVehicleType.type_name == db_value
+            )
+        )
+        vehicle_type_obj = result.scalars().first()
         
         if not vehicle_type_obj:
             raise ValueError(f"Vehicle type '{vehicle_type}' not found in database")
         
         return vehicle_type_obj.id
     
-    def _get_tow_reason_id(self, reason: str) -> uuid.UUID:
+    async def _get_tow_reason_id(self, reason: str) -> uuid.UUID:
         """Get tow reason UUID from lookup table"""
         from app.models import TowReason
         
@@ -107,17 +111,20 @@ class TowRequestMapper:
         normalized = reason.lower().strip()
         db_value = self.REASON_MAP.get(normalized, "other")
         
-        # Query the database for the UUID
-        reason_obj = self.db.query(TowReason).filter(
-            TowReason.reason_name == db_value
-        ).first()
+        # Query the database for the UUID using async select
+        result = await self.db.execute(
+            select(TowReason).filter(
+                TowReason.reason_name == db_value
+            )
+        )
+        reason_obj = result.scalars().first()
         
         if not reason_obj:
             raise ValueError(f"Tow reason '{reason}' not found in database")
         
         return reason_obj.id
     
-    def _determine_service_type(self, request_data: Dict[str, Any]) -> uuid.UUID:
+    async def _determine_service_type(self, request_data: Dict[str, Any]) -> uuid.UUID:
         """
         Determine which service type based on vehicle requirements.
         
@@ -147,10 +154,13 @@ class TowRequestMapper:
         else:
             service_name = "standard_tow"
         
-        # Query the database for the UUID
-        service_obj = self.db.query(ServiceType).filter(
-            ServiceType.service_name == service_name
-        ).first()
+        # Query the database for the UUID using async select
+        result = await self.db.execute(
+            select(ServiceType).filter(
+                ServiceType.service_name == service_name
+            )
+        )
+        service_obj = result.scalars().first()
         
         if not service_obj:
             raise ValueError(f"Service type '{service_name}' not found in database")
