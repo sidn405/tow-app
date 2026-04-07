@@ -9,7 +9,7 @@ import enum
 from app.database import Base
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.services.tow_request_mapper import TowRequestMapper
+
 from app.models import User
 from app.api.v1.auth import get_current_user
 from pydantic import BaseModel
@@ -136,6 +136,7 @@ async def create_simple_tow_request(
     db: Session = Depends(get_db)
 ):
     """Create tow request from simple frontend format"""
+    from app.services.tow_request_mapper import TowRequestMapper
     
     # Convert simple format to database UUIDs
     mapper = TowRequestMapper(db)
