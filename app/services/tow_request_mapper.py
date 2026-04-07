@@ -1,191 +1,158 @@
 """
-Helper service to map frontend simple data to backend UUID system
-Add this to: app/services/tow_request_helper.py
+Tow Request Mapper Service
+Converts simple frontend format to database UUID format
+Place this in: app/services/tow_request_mapper.py
 """
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Optional, Dict, Any
-from uuid import UUID
+
+from sqlalchemy.orm import Session
+from typing import Dict, Any
+import uuid
+
 
 class TowRequestMapper:
-    """Maps frontend simple data to backend UUID-based lookup tables"""
+    """Maps simple frontend tow request data to database UUID format"""
     
-    def __init__(self, db: AsyncSession):
+    # Mapping of frontend string values to database lookup table values
+    VEHICLE_TYPE_MAP = {
+        "sedan": "sedan",
+        "suv": "suv",
+        "truck": "truck",
+        "van": "van",
+        "luxury": "luxury",
+        "exotic": "exotic",
+        "motorcycle": "motorcycle",
+        "rv": "rv",
+        "large_truck": "large_truck"
+    }
+    
+    REASON_MAP = {
+        "breakdown": "breakdown",
+        "flat_tire": "flat_tire",
+        "accident": "accident",
+        "out_of_gas": "out_of_gas",
+        "dead_battery": "dead_battery",
+        "relocation": "relocation",
+        "other": "other"
+    }
+    
+    def __init__(self, db: Session):
         self.db = db
     
-    async def map_vehicle_type(self, vehicle_type_name: str) -> Optional[UUID]:
-        """Map vehicle type string to UUID"""
-        from app.models import CustomerVehicleType
-        
-        result = await self.db.execute(
-            select(CustomerVehicleType).where(
-                CustomerVehicleType.name == vehicle_type_name
-            )
-        )
-        vehicle_type = result.scalar_one_or_none()
-        
-        if vehicle_type:
-            return vehicle_type.id
-        
-        # Fallback to 'sedan' if not found
-        result = await self.db.execute(
-            select(CustomerVehicleType).where(
-                CustomerVehicleType.name == 'sedan'
-            )
-        )
-        fallback = result.scalar_one_or_none()
-        return fallback.id if fallback else None
-    
-    async def map_tow_reason(self, reason_name: str) -> Optional[UUID]:
-        """Map tow reason string to UUID"""
-        from app.models import TowReason
-        
-        result = await self.db.execute(
-            select(TowReason).where(
-                TowReason.name == reason_name
-            )
-        )
-        tow_reason = result.scalar_one_or_none()
-        
-        if tow_reason:
-            return tow_reason.id
-        
-        # Fallback to 'other'
-        result = await self.db.execute(
-            select(TowReason).where(
-                TowReason.name == 'other'
-            )
-        )
-        fallback = result.scalar_one_or_none()
-        return fallback.id if fallback else None
-    
-    async def determine_service_type(
-        self, 
-        vehicle_type_name: str,
-        is_awd: bool = False,
-        is_damaged: bool = False,
-        is_lowered: bool = False
-    ) -> Optional[UUID]:
-        """Determine appropriate service type based on vehicle requirements"""
-        from app.models import ServiceType
-        
-        # Logic to determine service type
-        if vehicle_type_name in ['exotic', 'luxury'] or is_awd or is_lowered:
-            # Requires flatbed
-            service_name = 'flatbed_tow'
-        elif vehicle_type_name == 'motorcycle':
-            service_name = 'motorcycle_tow'
-        elif vehicle_type_name in ['rv', 'large_truck'] or is_damaged:
-            service_name = 'heavy_duty_tow'
-        else:
-            service_name = 'standard_tow'
-        
-        result = await self.db.execute(
-            select(ServiceType).where(
-                ServiceType.name == service_name
-            )
-        )
-        service = result.scalar_one_or_none()
-        
-        if service:
-            return service.id
-        
-        # Fallback to standard_tow
-        result = await self.db.execute(
-            select(ServiceType).where(
-                ServiceType.name == 'standard_tow'
-            )
-        )
-        fallback = result.scalar_one_or_none()
-        return fallback.id if fallback else None
-    
-    async def map_frontend_data(self, frontend_data: Dict[str, Any]) -> Dict[str, Any]:
+    def map_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Convert frontend simple data to backend UUID-based data
+        Convert simple frontend format to database format with UUIDs.
         
-        Frontend sends:
-        {
-            "vehicle_year": 2020,
-            "vehicle_make": "Ferrari",
-            "vehicle_model": "458",
-            "vehicle_type": "exotic",
-            "is_awd": false,
-            "is_lowered": true,
-            "is_damaged": false,
-            "pickup_location": "123 Main St",
-            "dropoff_location": "456 Oak Ave",
-            "reason": "relocation"
-        }
-        
-        Backend needs:
-        {
-            "vehicle_year": 2020,
-            "vehicle_make": "Ferrari",
-            "vehicle_model": "458",
-            "vehicle_type_id": UUID,
-            "service_type_id": UUID,
-            "tow_reason_id": UUID,
-            "is_awd": false,
-            "is_lowered": true,
-            "is_damaged": false,
-            "pickup_location": {"latitude": 40.7, "longitude": -74.0},
-            "dropoff_location": {"latitude": 40.8, "longitude": -74.1}
-        }
+        Args:
+            request_data: Dictionary with simple string values from frontend
+            
+        Returns:
+            Dictionary with UUID references for database insertion
         """
+        # Get vehicle type from simple string
+        vehicle_type_str = request_data.get("vehicle_type", "sedan")
+        vehicle_type_id = self._get_vehicle_type_id(vehicle_type_str)
         
-        # Map vehicle type
-        vehicle_type_id = await self.map_vehicle_type(frontend_data.get('vehicle_type', 'sedan'))
-        
-        # Map tow reason
-        tow_reason_id = await self.map_tow_reason(frontend_data.get('reason', 'other'))
+        # Get tow reason from simple string
+        reason_str = request_data.get("reason", "other")
+        tow_reason_id = self._get_tow_reason_id(reason_str)
         
         # Determine service type based on vehicle requirements
-        service_type_id = await self.determine_service_type(
-            vehicle_type_name=frontend_data.get('vehicle_type', 'sedan'),
-            is_awd=frontend_data.get('is_awd', False),
-            is_damaged=frontend_data.get('is_damaged', False),
-            is_lowered=frontend_data.get('is_lowered', False)
-        )
+        service_type_id = self._determine_service_type(request_data)
         
         return {
-            'vehicle_year': frontend_data.get('vehicle_year'),
-            'vehicle_make': frontend_data.get('vehicle_make'),
-            'vehicle_model': frontend_data.get('vehicle_model'),
-            'vehicle_type_id': vehicle_type_id,
-            'service_type_id': service_type_id,
-            'tow_reason_id': tow_reason_id,
-            'is_awd': frontend_data.get('is_awd', False),
-            'is_lowered': frontend_data.get('is_lowered', False),
-            'is_damaged': frontend_data.get('is_damaged', False),
-            # Note: You'll need to geocode these addresses to lat/long
-            'pickup_address': frontend_data.get('pickup_location'),
-            'dropoff_address': frontend_data.get('dropoff_location'),
+            "vehicle_type_id": vehicle_type_id,
+            "tow_reason_id": tow_reason_id,
+            "service_type_id": service_type_id,
+            "vehicle_make": request_data.get("vehicle_make"),
+            "vehicle_model": request_data.get("vehicle_model"),
+            "vehicle_year": request_data.get("vehicle_year"),
+            "vehicle_color": request_data.get("vehicle_color"),
+            "license_plate": request_data.get("license_plate"),
+            "is_awd": request_data.get("is_awd", False),
+            "is_lowered": request_data.get("is_lowered", False),
+            "is_damaged": request_data.get("is_damaged", False),
+            "pickup_address": request_data.get("pickup_location"),
+            "pickup_lat": request_data.get("pickup_lat"),
+            "pickup_lng": request_data.get("pickup_lng"),
+            "dropoff_address": request_data.get("dropoff_location"),
+            "dropoff_lat": request_data.get("dropoff_lat"),
+            "dropoff_lng": request_data.get("dropoff_lng"),
+            "pickup_notes": request_data.get("pickup_notes"),
+            "dropoff_notes": request_data.get("dropoff_notes"),
         }
-
-
-# Example usage in your endpoint:
-
-"""
-@router.post("/request-simple", response_model=TowRequestResponse)
-async def create_tow_request_simple(
-    frontend_data: dict,  # Simple frontend data
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    '''
-    Simplified endpoint that accepts frontend simple data
-    and converts to backend UUID system
-    '''
     
-    # Map frontend data to backend format
-    mapper = TowRequestMapper(db)
-    backend_data = await mapper.map_frontend_data(frontend_data)
+    def _get_vehicle_type_id(self, vehicle_type: str) -> uuid.UUID:
+        """Get vehicle type UUID from lookup table"""
+        from app.models import CustomerVehicleType
+        
+        # Normalize the vehicle type string
+        normalized = vehicle_type.lower().strip()
+        db_value = self.VEHICLE_TYPE_MAP.get(normalized, "sedan")
+        
+        # Query the database for the UUID
+        vehicle_type_obj = self.db.query(CustomerVehicleType).filter(
+            CustomerVehicleType.type_name == db_value
+        ).first()
+        
+        if not vehicle_type_obj:
+            raise ValueError(f"Vehicle type '{vehicle_type}' not found in database")
+        
+        return vehicle_type_obj.id
     
-    # TODO: Geocode addresses to lat/long
-    # For now, use mock coordinates or integrate Google Maps API
+    def _get_tow_reason_id(self, reason: str) -> uuid.UUID:
+        """Get tow reason UUID from lookup table"""
+        from app.models import TowReason
+        
+        # Normalize the reason string
+        normalized = reason.lower().strip()
+        db_value = self.REASON_MAP.get(normalized, "other")
+        
+        # Query the database for the UUID
+        reason_obj = self.db.query(TowReason).filter(
+            TowReason.reason_name == db_value
+        ).first()
+        
+        if not reason_obj:
+            raise ValueError(f"Tow reason '{reason}' not found in database")
+        
+        return reason_obj.id
     
-    # Create the actual tow request using your existing logic
-    # ... (rest of your create_tow_request logic)
-    
-    return tow_request
-"""
+    def _determine_service_type(self, request_data: Dict[str, Any]) -> uuid.UUID:
+        """
+        Determine which service type based on vehicle requirements.
+        
+        Rules:
+        - Exotic/luxury cars → flatbed_tow
+        - AWD vehicles → flatbed_tow
+        - Lowered vehicles → flatbed_tow
+        - Damaged vehicles → flatbed_tow
+        - Motorcycles → motorcycle_tow
+        - Heavy trucks → heavy_duty_tow
+        - Everything else → standard_tow
+        """
+        from app.models import ServiceType
+        
+        vehicle_type = request_data.get("vehicle_type", "").lower()
+        is_awd = request_data.get("is_awd", False)
+        is_lowered = request_data.get("is_lowered", False)
+        is_damaged = request_data.get("is_damaged", False)
+        
+        # Determine service type based on requirements
+        if vehicle_type == "motorcycle":
+            service_name = "motorcycle_tow"
+        elif vehicle_type in ["large_truck", "rv"]:
+            service_name = "heavy_duty_tow"
+        elif vehicle_type in ["exotic", "luxury"] or is_awd or is_lowered or is_damaged:
+            service_name = "flatbed_tow"
+        else:
+            service_name = "standard_tow"
+        
+        # Query the database for the UUID
+        service_obj = self.db.query(ServiceType).filter(
+            ServiceType.service_name == service_name
+        ).first()
+        
+        if not service_obj:
+            raise ValueError(f"Service type '{service_name}' not found in database")
+        
+        return service_obj.id
