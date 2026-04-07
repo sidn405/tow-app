@@ -1,5 +1,5 @@
 """
-Tow Request Mapper Service - ASYNC VERSION
+Tow Request Mapper Service - ASYNC VERSION with CORRECT COLUMN NAMES
 Converts simple frontend format to database UUID format
 Place this in: app/services/tow_request_mapper.py
 """
@@ -93,7 +93,7 @@ class TowRequestMapper:
         # Query the database for the UUID using async select
         result = await self.db.execute(
             select(CustomerVehicleType).filter(
-                CustomerVehicleType.type_name == db_value
+                CustomerVehicleType.name == db_value  # ← Changed from type_name to name
             )
         )
         vehicle_type_obj = result.scalars().first()
@@ -114,7 +114,7 @@ class TowRequestMapper:
         # Query the database for the UUID using async select
         result = await self.db.execute(
             select(TowReason).filter(
-                TowReason.reason_name == db_value
+                TowReason.name == db_value  # ← Changed from reason_name to name
             )
         )
         reason_obj = result.scalars().first()
@@ -157,7 +157,7 @@ class TowRequestMapper:
         # Query the database for the UUID using async select
         result = await self.db.execute(
             select(ServiceType).filter(
-                ServiceType.service_name == service_name
+                ServiceType.name == service_name  # ← Changed from service_name to name
             )
         )
         service_obj = result.scalars().first()
