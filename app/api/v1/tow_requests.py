@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.database import get_db
+from app.models import User
+from app.api.v1.auth import get_current_user
 from app.dependencies import get_current_user, get_current_customer, get_current_driver
 from app.schemas.tow_request import (
     TowQuoteRequest, TowQuoteResponse, TowRequestCreate,
@@ -15,6 +18,28 @@ from app.models import User, TowRequest, TowStatus, PaymentStatus
 from app.utils.geo import calculate_distance
 from typing import List
 from uuid import UUID
+
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class SimpleTowRequest(BaseModel):
+    """Frontend sends simple string data"""
+    vehicle_year: int = Field(..., ge=1900, le=2026)
+    vehicle_make: str
+    vehicle_model: str
+    vehicle_type: str  # sedan, luxury, exotic, etc.
+    is_awd: bool = False
+    is_lowered: bool = False
+    is_damaged: bool = False
+    pickup_location: str
+    pickup_lat: float
+    pickup_lng: float
+    dropoff_location: str
+    dropoff_lat: float
+    dropoff_lng: float
+    reason: str
+    vehicle_color: Optional[str] = None
+    license_plate: Optional[str] = None
 
 router = APIRouter(prefix="/tows", tags=["Tow Requests"])
 
@@ -41,6 +66,30 @@ async def get_tow_quote(
     )
     
     return TowQuoteResponse(**pricing)
+
+@router.post("/request-simple")
+async def create_simple_tow_request(
+    request: SimpleTowRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create tow request from simple frontend format"""
+    from app.services.tow_request_mapper import TowRequestMapper
+    
+    try:
+        mapper = TowRequestMapper(db)
+        mapped_data = mapper.map_request(request.dict())
+        
+        return {
+            "success": True,
+            "message": "Tow request received",
+            "estimated_price": 125.00,
+            **mapped_data
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.post("/", response_model=TowRequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_tow_request(
