@@ -43,6 +43,8 @@ class SimpleTowRequest(BaseModel):
     reason: str
     vehicle_color: Optional[str] = None
     license_plate: Optional[str] = None
+    pickup_notes: Optional[str] = None  # ← Add this
+    dropoff_notes: Optional[str] = None  # ← Add this
 
 router = APIRouter(prefix="/tows", tags=["Tow Requests"])
 
