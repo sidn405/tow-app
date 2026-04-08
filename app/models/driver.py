@@ -53,7 +53,8 @@ class Driver(Base):
     
     # Status
     is_online = Column(Boolean, default=False)
-    current_location = Column(Geography(geometry_type='POINT', srid=4326))
+    current_latitude = Column(Numeric(10, 8))
+    current_longitude = Column(Numeric(11, 8))
     approval_status = Column(SQLEnum(ApprovalStatus), default=ApprovalStatus.PENDING)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

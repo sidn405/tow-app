@@ -45,10 +45,12 @@ class TowRequest(Base):
     is_damaged = Column(Boolean, default=False)
     
     # Location details
-    pickup_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    pickup_latitude = Column(Numeric(10, 8), nullable=False)
+    pickup_longitude = Column(Numeric(11, 8), nullable=False)
     pickup_address = Column(Text, nullable=False)
     pickup_notes = Column(Text)
-    dropoff_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    dropoff_latitude = Column(Numeric(10, 8), nullable=False)
+    dropoff_longitude = Column(Numeric(11, 8), nullable=False)
     dropoff_address = Column(Text, nullable=False)
     dropoff_notes = Column(Text)
     distance_miles = Column(Numeric(10, 2))
