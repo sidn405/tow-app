@@ -97,7 +97,8 @@ async def get_redis():
 async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
-        #await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+        # Temporarily skip PostGIS - not available on Postgres 17
+        # await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
         await conn.run_sync(Base.metadata.create_all)
 
 async def close_db():
