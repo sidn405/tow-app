@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.database import get_db
-from app.models import User
+
 from app.api.v1.auth import get_current_user
 from app.dependencies import get_current_user, get_current_customer, get_current_driver
 from app.schemas.tow_request import (
@@ -21,6 +21,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from typing import Optional
+from geoalchemy2.elements import WKTElement
+from datetime import datetime
+import uuid
 
 class SimpleTowRequest(BaseModel):
     """Frontend sends simple string data"""
@@ -71,25 +74,215 @@ async def get_tow_quote(
 async def create_simple_tow_request(
     request: SimpleTowRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)  # ← Make sure it's AsyncSession
+    db: AsyncSession = Depends(get_db)
 ):
-    """Create tow request from simple frontend format"""
+    """
+    Create tow request from simple frontend format and save to database.
+    
+    Steps:
+    1. Convert simple format to database format with UUIDs
+    2. Create TowRequest record in database
+    3. Return success with request ID and estimated price
+    """
     from app.services.tow_request_mapper import TowRequestMapper
     
     try:
+        # Step 1: Convert simple format to database format
         mapper = TowRequestMapper(db)
-        mapped_data = await mapper.map_request(request.dict())  # ← Add await here!
+        mapped_data = await mapper.map_request(request.dict())
         
+        # Step 2: Create PostGIS POINT objects for locations
+        pickup_point = WKTElement(
+            f'POINT({request.pickup_lng} {request.pickup_lat})',
+            srid=4326
+        )
+        dropoff_point = WKTElement(
+            f'POINT({request.dropoff_lng} {request.dropoff_lat})',
+            srid=4326
+        )
+        
+        # Step 3: Calculate distance (simplified - you can improve this)
+        # For now, using simple Haversine formula estimate
+        distance_miles = calculate_distance(
+            request.pickup_lat, request.pickup_lng,
+            request.dropoff_lat, request.dropoff_lng
+        )
+        
+        # Step 4: Calculate pricing (TODO: use your real pricing service)
+        pricing = calculate_pricing(
+            distance_miles=distance_miles,
+            vehicle_type=request.vehicle_type,
+            service_type=mapped_data.get("service_type_id"),
+            is_awd=request.is_awd,
+            is_lowered=request.is_lowered,
+            is_damaged=request.is_damaged
+        )
+        
+        # Step 5: Create TowRequest record
+        tow_request = TowRequest(
+            id=uuid.uuid4(),
+            customer_id=current_user.id,
+            
+            # Vehicle details
+            vehicle_year=request.vehicle_year,
+            vehicle_make=request.vehicle_make,
+            vehicle_model=request.vehicle_model,
+            vehicle_color=request.vehicle_color,
+            license_plate=request.license_plate,
+            
+            # Special requirements
+            is_awd=request.is_awd,
+            is_lowered=request.is_lowered,
+            is_damaged=request.is_damaged,
+            
+            # Lookup table references
+            service_type_id=mapped_data.get("service_type_id"),
+            vehicle_type_id=mapped_data.get("vehicle_type_id"),
+            tow_reason_id=mapped_data.get("tow_reason_id"),
+            
+            # Location details
+            pickup_location=pickup_point,
+            pickup_address=request.pickup_location,
+            pickup_notes=request.pickup_notes,
+            dropoff_location=dropoff_point,
+            dropoff_address=request.dropoff_location,
+            dropoff_notes=request.dropoff_notes,
+            distance_miles=distance_miles,
+            
+            # Pricing
+            quoted_price=pricing["total_price"],
+            driver_payout=pricing["driver_payout"],
+            platform_fee=pricing["platform_fee"],
+            stripe_fee=pricing["stripe_fee"],
+            
+            # Status
+            status=TowStatus.PENDING,
+            payment_status=PaymentStatus.PENDING,
+            requested_at=datetime.utcnow(),
+        )
+        
+        # Step 6: Save to database
+        db.add(tow_request)
+        await db.commit()
+        await db.refresh(tow_request)
+        
+        # Step 7: Return success response
         return {
             "success": True,
-            "message": "Tow request received",
-            "estimated_price": 125.00,
-            **mapped_data
+            "message": "Tow request created successfully",
+            "request_id": str(tow_request.id),
+            "estimated_price": float(pricing["total_price"]),
+            "distance_miles": float(distance_miles),
+            "service_type": "flatbed" if request.is_awd or request.is_lowered else "standard",
+            "status": "pending"
         }
+        
     except ValueError as e:
+        # Validation errors (e.g., lookup table not found)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        # Rollback on any error
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating tow request: {str(e)}")
+ 
+ 
+def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """
+    Calculate distance between two points using Haversine formula.
+    Returns distance in miles.
+    """
+    from math import radians, sin, cos, sqrt, atan2
+    
+    # Earth's radius in miles
+    R = 3959.0
+    
+    # Convert to radians
+    lat1_rad = radians(lat1)
+    lng1_rad = radians(lng1)
+    lat2_rad = radians(lat2)
+    lng2_rad = radians(lng2)
+    
+    # Haversine formula
+    dlat = lat2_rad - lat1_rad
+    dlng = lng2_rad - lng1_rad
+    
+    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlng / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    
+    distance = R * c
+    return round(distance, 2)
+ 
+ 
+def calculate_pricing(
+    distance_miles: float,
+    vehicle_type: str,
+    service_type: str,
+    is_awd: bool = False,
+    is_lowered: bool = False,
+    is_damaged: bool = False
+) -> dict:
+    """
+    Calculate pricing for tow request.
+    
+    TODO: Replace this with your actual PricingService logic.
+    This is a simplified version for now.
+    """
+    # Base rates
+    base_rate = 75.00
+    per_mile_rate = 3.50
+    
+    # Vehicle type multipliers
+    vehicle_multipliers = {
+        "sedan": 1.0,
+        "suv": 1.2,
+        "truck": 1.3,
+        "van": 1.2,
+        "luxury": 1.5,
+        "exotic": 2.0,
+        "motorcycle": 0.8,
+        "rv": 1.8,
+        "large_truck": 2.5
+    }
+    
+    # Service type adjustments
+    service_adjustments = {
+        "standard_tow": 0,
+        "flatbed_tow": 25,
+        "motorcycle_tow": -10,
+        "heavy_duty_tow": 50
+    }
+    
+    # Calculate base price
+    multiplier = vehicle_multipliers.get(vehicle_type.lower(), 1.0)
+    distance_charge = distance_miles * per_mile_rate
+    subtotal = (base_rate + distance_charge) * multiplier
+    
+    # Add service type adjustment
+    # Note: We need to look up the actual service type name from the UUID
+    # For now, estimate based on vehicle requirements
+    if is_awd or is_lowered or is_damaged or vehicle_type in ["exotic", "luxury"]:
+        subtotal += 25  # Flatbed surcharge
+    
+    # Platform fee (15%)
+    platform_fee = subtotal * 0.15
+    
+    # Stripe fee (2.9% + $0.30)
+    stripe_fee = (subtotal * 0.029) + 0.30
+    
+    # Total price to customer
+    total_price = subtotal + platform_fee + stripe_fee
+    
+    # Driver payout (85% of subtotal)
+    driver_payout = subtotal * 0.85
+    
+    return {
+        "total_price": round(total_price, 2),
+        "driver_payout": round(driver_payout, 2),
+        "platform_fee": round(platform_fee, 2),
+        "stripe_fee": round(stripe_fee, 2),
+        "distance_charge": round(distance_charge, 2),
+        "base_rate": base_rate
+    }
 
 @router.post("/", response_model=TowRequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_tow_request(
