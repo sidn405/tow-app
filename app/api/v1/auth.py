@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from datetime import datetime, timedelta
+import stripe
 from app.config import settings  # Line 6
 from app.schemas.user import (
     UserCreate, UserLogin, UserResponse, TokenResponse,
@@ -15,6 +16,8 @@ from app.models import User
 from uuid import uuid4
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(
@@ -41,6 +44,25 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Phone number already registered"
         )
+        
+    # Create Stripe customer with payment method
+    stripe_customer_id = None
+    default_payment_method_id = None
+    
+    if user_data.payment_method_id:
+        try:
+            stripe_customer = stripe.Customer.create(
+                email=user_data.email,
+                name=user_data.name,
+                phone=user_data.phone,
+                payment_method=user_data.payment_method_id,
+                invoice_settings={'default_payment_method': user_data.payment_method_id}
+            )
+            stripe_customer_id = stripe_customer.id
+            default_payment_method_id = user_data.payment_method_id
+        except stripe.error.StripeError as e:
+            raise HTTPException(status_code=400, detail=f"Payment error: {str(e)}")
+    
     
     # Create user
     user = User(
@@ -49,7 +71,10 @@ async def register(
         password_hash=AuthService.hash_password(user_data.password),
         role=user_data.role,
         first_name=user_data.first_name,
-        last_name=user_data.last_name
+        last_name=user_data.last_name,
+        stripe_customer_id=stripe_customer_id,  # ← ADD
+        default_payment_method_id=default_payment_method_id,  # ← ADD
+        is_active=True
     )
     
     db.add(user)

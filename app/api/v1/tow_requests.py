@@ -10,6 +10,7 @@ from app.schemas.tow_request import (
     TowQuoteRequest, TowQuoteResponse, TowRequestCreate,
     TowRequestResponse, TowStatusUpdate, TowRating, TowCancellation
 )
+import stripe
 from app.services.pricing_service import PricingService
 from app.services.matching_service import MatchingService
 from app.services.payment_service import PaymentService
@@ -153,15 +154,49 @@ async def create_simple_tow_request(
         await db.commit()
         await db.refresh(tow_request)
         
+        # CHARGE CUSTOMER using your PaymentService
+        payment_service = PaymentService(db)
+        
+        if current_user.stripe_customer_id:
+            try:
+                # Charge immediately using saved payment method
+                payment_intent = stripe.PaymentIntent.create(
+                    amount=int(pricing["customer_price"] * 100),  # to cents
+                    currency='usd',
+                    customer=current_user.stripe_customer_id,
+                    payment_method=current_user.default_payment_method_id,
+                    off_session=True,
+                    confirm=True,
+                    description=f"Tow: {request.pickup_location} → {request.dropoff_location}",
+                    metadata={
+                        'tow_request_id': str(tow_request.id),
+                        'customer_email': current_user.email
+                    }
+                )
+                
+                if payment_intent.status == 'succeeded':
+                    tow_request.payment_intent_id = payment_intent.id
+                    tow_request.payment_status = PaymentStatus.PAID
+                    await db.commit()
+                else:
+                    raise HTTPException(400, "Payment failed")
+                    
+            except stripe.error.CardError as e:
+                tow_request.payment_status = PaymentStatus.FAILED
+                await db.commit()
+                raise HTTPException(400, f"Card declined: {e.user_message}")
+        else:
+            raise HTTPException(400, "No payment method on file")
+        
         # Step 6: Return success response
         return {
             "success": True,
-            "message": "Tow request created successfully",
+            "message": "Tow request created and paid! 💳",
             "request_id": str(tow_request.id),
             "estimated_price": float(pricing["total_price"]),
             "distance_miles": float(distance_miles),
             "service_type": "flatbed" if request.is_awd or request.is_lowered else "standard",
-            "status": "pending"
+            "status": "paid"
         }
         
     except ValueError as e:

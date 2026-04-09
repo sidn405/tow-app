@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import init_db, close_db, init_redis
 from app.api.v1 import auth, drivers, tow_requests, websocket
+from app.api.v1 import config
 import logging
 
 # Configure logging
@@ -78,6 +79,7 @@ app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(drivers.router, prefix=settings.API_V1_PREFIX)
 app.include_router(tow_requests.router, prefix=settings.API_V1_PREFIX)
 app.include_router(websocket.router)
+app.include_router(config.router)
     
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_path):

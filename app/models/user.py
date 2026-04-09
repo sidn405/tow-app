@@ -27,6 +27,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    stripe_customer_id = Column(String(255), nullable=True, index=True)
+    default_payment_method_id = Column(String(255), nullable=True)
     
     # Relationships
     driver_profile = relationship("Driver", back_populates="user", uselist=False)
