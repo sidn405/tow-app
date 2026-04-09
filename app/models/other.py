@@ -2,7 +2,6 @@ from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime, T
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from geoalchemy2 import Geography
 import uuid
 import enum
 from app.database import Base
@@ -37,7 +36,8 @@ class LocationHistory(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     tow_request_id = Column(UUID(as_uuid=True), ForeignKey("tow_requests.id", ondelete="CASCADE"))
     driver_id = Column(UUID(as_uuid=True), ForeignKey("drivers.id"))
-    location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    latitude = Column(Numeric(10, 8), nullable=False)
+    longitude = Column(Numeric(11, 8), nullable=False)
     speed = Column(Numeric(5, 2))
     heading = Column(Integer)
     recorded_at = Column(DateTime(timezone=True), server_default=func.now())

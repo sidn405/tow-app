@@ -2,7 +2,6 @@ from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Integer, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from geoalchemy2 import Geography
 import uuid
 import enum
 from app.database import Base
