@@ -12,7 +12,6 @@ from app.services.payment_service import PaymentService
 from app.services.matching_service import MatchingService
 from typing import List
 from uuid import UUID
-from geoalchemy2.elements import WKTElement
 from decimal import Decimal
 
 router = APIRouter(prefix="/drivers", tags=["Drivers"])
@@ -123,12 +122,10 @@ async def toggle_online_status(
     driver = current_user.driver_profile
     driver.is_online = status_data.is_online
     
-    # Update location if going online
+    # Update location if going online - CHANGED to use lat/lng
     if status_data.is_online and status_data.latitude and status_data.longitude:
-        driver.current_location = WKTElement(
-            f"POINT({status_data.longitude} {status_data.latitude})",
-            srid=4326
-        )
+        driver.current_latitude = status_data.latitude
+        driver.current_longitude = status_data.longitude
     
     await db.commit()
     
@@ -136,7 +133,8 @@ async def toggle_online_status(
         "is_online": driver.is_online,
         "message": "Status updated successfully"
     }
-
+ 
+ 
 @router.put("/location")
 async def update_driver_location(
     location: DriverLocationUpdate,
@@ -151,10 +149,9 @@ async def update_driver_location(
         )
     
     driver = current_user.driver_profile
-    driver.current_location = WKTElement(
-        f"POINT({location.longitude} {location.latitude})",
-        srid=4326
-    )
+    # CHANGED to use lat/lng columns
+    driver.current_latitude = location.latitude
+    driver.current_longitude = location.longitude
     
     await db.commit()
     
@@ -178,10 +175,9 @@ async def update_driver_location(
         location_record = LocationHistory(
             tow_request_id=active_tow.id,
             driver_id=driver.id,
-            location=WKTElement(
-                f"POINT({location.longitude} {location.latitude})",
-                srid=4326
-            ),
+            # CHANGED to use lat/lng columns
+            latitude=location.latitude,
+            longitude=location.longitude,
             speed=location.speed,
             heading=location.heading
         )

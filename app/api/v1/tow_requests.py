@@ -21,7 +21,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from geoalchemy2.elements import WKTElement
 from datetime import datetime
 import uuid
 
@@ -80,11 +79,6 @@ async def create_simple_tow_request(
 ):
     """
     Create tow request from simple frontend format and save to database.
-    
-    Steps:
-    1. Convert simple format to database format with UUIDs
-    2. Create TowRequest record in database
-    3. Return success with request ID and estimated price
     """
     from app.services.tow_request_mapper import TowRequestMapper
     
@@ -93,24 +87,13 @@ async def create_simple_tow_request(
         mapper = TowRequestMapper(db)
         mapped_data = await mapper.map_request(request.dict())
         
-        # Step 2: Create PostGIS POINT objects for locations
-        pickup_point = WKTElement(
-            f'POINT({request.pickup_lng} {request.pickup_lat})',
-            srid=4326
-        )
-        dropoff_point = WKTElement(
-            f'POINT({request.dropoff_lng} {request.dropoff_lat})',
-            srid=4326
-        )
-        
-        # Step 3: Calculate distance (simplified - you can improve this)
-        # For now, using simple Haversine formula estimate
+        # Step 2: Calculate distance
         distance_miles = calculate_distance(
             request.pickup_lat, request.pickup_lng,
             request.dropoff_lat, request.dropoff_lng
         )
         
-        # Step 4: Calculate pricing (TODO: use your real pricing service)
+        # Step 3: Calculate pricing
         pricing = calculate_pricing(
             distance_miles=distance_miles,
             vehicle_type=request.vehicle_type,
@@ -120,7 +103,7 @@ async def create_simple_tow_request(
             is_damaged=request.is_damaged
         )
         
-        # Step 5: Create TowRequest record
+        # Step 4: Create TowRequest record
         tow_request = TowRequest(
             id=uuid.uuid4(),
             customer_id=current_user.id,
@@ -142,11 +125,13 @@ async def create_simple_tow_request(
             vehicle_type_id=mapped_data.get("vehicle_type_id"),
             tow_reason_id=mapped_data.get("tow_reason_id"),
             
-            # Location details
-            pickup_location=pickup_point,
+            # Location details - CHANGED to use lat/lng
+            pickup_latitude=request.pickup_lat,
+            pickup_longitude=request.pickup_lng,
             pickup_address=request.pickup_location,
             pickup_notes=request.pickup_notes,
-            dropoff_location=dropoff_point,
+            dropoff_latitude=request.dropoff_lat,
+            dropoff_longitude=request.dropoff_lng,
             dropoff_address=request.dropoff_location,
             dropoff_notes=request.dropoff_notes,
             distance_miles=distance_miles,
@@ -163,12 +148,12 @@ async def create_simple_tow_request(
             requested_at=datetime.utcnow(),
         )
         
-        # Step 6: Save to database
+        # Step 5: Save to database
         db.add(tow_request)
         await db.commit()
         await db.refresh(tow_request)
         
-        # Step 7: Return success response
+        # Step 6: Return success response
         return {
             "success": True,
             "message": "Tow request created successfully",
@@ -180,10 +165,8 @@ async def create_simple_tow_request(
         }
         
     except ValueError as e:
-        # Validation errors (e.g., lookup table not found)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        # Rollback on any error
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error creating tow request: {str(e)}")
  
@@ -317,16 +300,17 @@ async def create_tow_request(
     )
     
     # Create tow request
-    from geoalchemy2.elements import WKTElement
     tow_request = TowRequest(
         customer_id=current_user.id,
         service_type_id=tow_data.service_type_id,
         vehicle_type_id=tow_data.vehicle_type_id,
         tow_reason_id=tow_data.tow_reason_id,
-        pickup_location=WKTElement(f"POINT({tow_data.pickup_location.longitude} {tow_data.pickup_location.latitude})", srid=4326),
+        pickup_latitude=tow_data.pickup_location.latitude,
+        pickup_longitude=tow_data.pickup_location.longitude,
         pickup_address=tow_data.pickup_address,
         pickup_notes=tow_data.pickup_notes,
-        dropoff_location=WKTElement(f"POINT({tow_data.dropoff_location.longitude} {tow_data.dropoff_location.latitude})", srid=4326),
+        dropoff_latitude=tow_data.dropoff_location.latitude,
+        dropoff_longitude=tow_data.dropoff_location.longitude,
         dropoff_address=tow_data.dropoff_address,
         dropoff_notes=tow_data.dropoff_notes,
         distance_miles=pricing["distance_miles"],

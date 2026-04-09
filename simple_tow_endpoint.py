@@ -124,7 +124,6 @@ async def create_tow_request_simple(
     )
     
     # Create tow request with ALL the fields
-    from geoalchemy2.elements import WKTElement
     tow_request = TowRequest(
         customer_id=current_user.id,
         service_type_id=service_type_id,
