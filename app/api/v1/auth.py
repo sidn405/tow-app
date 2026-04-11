@@ -5,6 +5,7 @@ from app.database import get_db
 from datetime import datetime, timedelta
 import stripe
 from app.config import settings  # Line 6
+from typing import Optional
 from app.schemas.user import (
     UserCreate, UserLogin, UserResponse, TokenResponse,
     PasswordResetRequest, PasswordReset
@@ -48,6 +49,8 @@ async def register(
     # Create Stripe customer with payment method
     stripe_customer_id = None
     default_payment_method_id = None
+    full_name = f"{user_data.first_name} {user_data.last_name}"  # ← Combine names
+    
     
     if user_data.payment_method_id:
         try:

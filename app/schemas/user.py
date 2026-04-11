@@ -14,7 +14,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
     role: UserRole
-    payment_method_id: str = None
+    payment_method_id: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
