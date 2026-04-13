@@ -138,7 +138,7 @@ async def create_simple_tow_request(
             distance_miles=distance_miles,
             
             # Pricing
-            quoted_price=pricing["total_price"],
+            quoted_price=pricing["customer_price"],
             driver_payout=pricing["driver_payout"],
             platform_fee=pricing["platform_fee"],
             stripe_fee=pricing["stripe_fee"],
@@ -193,7 +193,7 @@ async def create_simple_tow_request(
             "success": True,
             "message": "Tow request created and paid! 💳",
             "request_id": str(tow_request.id),
-            "estimated_price": float(pricing["total_price"]),
+            "estimated_price": float(pricing["customer_price"]),
             "distance_miles": float(distance_miles),
             "service_type": "flatbed" if request.is_awd or request.is_lowered else "standard",
             "status": "paid"
