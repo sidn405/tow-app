@@ -494,6 +494,14 @@
                                 📄 View Receipt
                             </button>
                         ` : ''}
+
+                        <!-- ADD THIS TRACKING BUTTON HERE -->
+                        ${tow.status !== 'completed' && tow.status !== 'cancelled' ? `
+                            <button onclick="trackTow('${tow.id}')" 
+                                    class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition">
+                                📍 Track Driver
+                            </button>
+                        ` : ''}
                     </div>
                 `).join('');
 
@@ -596,6 +604,10 @@
             loadProfile();
             initMapbox();
         });
+
+        function trackTow(towId) {
+            window.open(`/tracking.html?id=${towId}`, '_blank');
+        }
     </script>
 </body>
 </html>
