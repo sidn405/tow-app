@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Tow - TowNow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- Status Card Overlay -->
+    <div class="absolute top-4 left-4 right-4 bg-white rounded-lg shadow-xl p-4 z-10 max-w-md">
+        <h2 class="text-xl font-bold text-gray-800 mb-2">🚗 Your Tow</h2>
+        <div id="statusInfo">
+            <div class="animate-pulse">Loading tracking info...</div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let driverMarker;
+        let pickupMarker;
+        let dropoffMarker;
+        let trackingInterval;
+        const towId = new URLSearchParams(window.location.search).get('id');
+
+        async function initMap() {
+            // Get Mapbox token
+            const tokenRes = await fetch('/api/v1/config/mapbox-token');
+            const tokenData = await tokenRes.json();
+            mapboxgl.accessToken = tokenData.token;
+
+            // Initialize map
+            map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: [-90.0715, 29.9511], // New Orleans
+                zoom: 10
+            });
+
+            // Start tracking
+            updateTracking();
+            trackingInterval = setInterval(updateTracking, 10000); // Update every 10 seconds
+        }
+
+        async function updateTracking() {
+            try {
+                const response = await fetch(`/api/v1/tows/${towId}/tracking`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                const data = await response.json();
+
+                // Update status card
+                document.getElementById('statusInfo').innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                ${formatStatus(data.status)}
+                            </span>
+                        </div>
+                        ${data.driver_info ? `
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Driver:</span>
+                                <span class="font-medium">${data.driver_info.name}</span>
+                            </div>
+                        ` : ''}
+                        <div class="text-sm text-gray-600">
+                            📍 Pickup: ${data.pickup_location.address}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            🏁 Dropoff: ${data.dropoff_location.address}
+                        </div>
+                    </div>
+                `;
+
+                // Update markers
+                if (data.driver_location.latitude && data.driver_location.longitude) {
+                    const driverLngLat = [data.driver_location.longitude, data.driver_location.latitude];
+                    
+                    if (driverMarker) {
+                        driverMarker.setLngLat(driverLngLat);
+                    } else {
+                        // Create driver marker (truck icon)
+                        const el = document.createElement('div');
+                        el.className = 'driver-marker';
+                        el.innerHTML = '🚚';
+                        el.style.fontSize = '30px';
+                        
+                        driverMarker = new mapboxgl.Marker(el)
+                            .setLngLat(driverLngLat)
+                            .addTo(map);
+                    }
+
+                    // Center map on driver
+                    map.flyTo({center: driverLngLat, zoom: 13});
+                }
+
+                // Add pickup marker
+                if (!pickupMarker) {
+                    pickupMarker = new mapboxgl.Marker({color: '#22c55e'})
+                        .setLngLat([data.pickup_location.longitude, data.pickup_location.latitude])
+                        .setPopup(new mapboxgl.Popup().setHTML('<p>📍 Pickup Location</p>'))
+                        .addTo(map);
+                }
+
+                // Add dropoff marker
+                if (!dropoffMarker) {
+                    dropoffMarker = new mapboxgl.Marker({color: '#ef4444'})
+                        .setLngLat([data.dropoff_location.longitude, data.dropoff_location.latitude])
+                        .setPopup(new mapboxgl.Popup().setHTML('<p>🏁 Dropoff Location</p>'))
+                        .addTo(map);
+                }
+
+                // Draw route line (optional)
+                if (data.driver_location.latitude && map.getSource('route')) {
+                    // Update route
+                }
+
+            } catch (error) {
+                console.error('Error updating tracking:', error);
+            }
+        }
+
+        function formatStatus(status) {
+            const labels = {
+                'accepted': 'Driver Assigned',
+                'en_route_pickup': 'Driver En Route',
+                'arrived_pickup': 'Driver Arrived',
+                'vehicle_loaded': 'Vehicle Loaded',
+                'en_route_dropoff': 'Heading to Dropoff',
+                'arrived_dropoff': 'Arrived at Destination',
+                'completed': 'Tow Completed'
+            };
+            return labels[status] || status;
+        }
+
+        // Initialize
+        initMap();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+            }
+        });
+    </script>
+</body>
+</html>

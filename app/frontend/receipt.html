@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tow Receipt - TowNow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="bg-white rounded-lg shadow-lg p-8" id="receipt">
+            <!-- Receipt content loaded here -->
+        </div>
+        <div class="mt-4 text-center">
+            <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
+                🖨️ Print Receipt
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function loadReceipt() {
+            const params = new URLSearchParams(window.location.search);
+            const towId = params.get('id');
+            
+            const response = await fetch(`/api/v1/tows/${towId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            const tow = await response.json();
+            
+            document.getElementById('receipt').innerHTML = `
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">⚡ TowNow</h1>
+                    <p class="text-gray-600">Tow Service Receipt</p>
+                </div>
+
+                <div class="border-b pb-4 mb-4">
+                    <h2 class="font-semibold text-gray-800">Receipt #${tow.id.substring(0, 8)}</h2>
+                    <p class="text-sm text-gray-600">${new Date(tow.completed_at).toLocaleString()}</p>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Vehicle:</span>
+                        <span class="font-medium">${tow.vehicle_year} ${tow.vehicle_make} ${tow.vehicle_model}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">From:</span>
+                        <span class="font-medium text-right">${tow.pickup_address}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">To:</span>
+                        <span class="font-medium text-right">${tow.dropoff_address}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Distance:</span>
+                        <span class="font-medium">${tow.distance_miles} miles</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-b py-4 mb-4 space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Base Price:</span>
+                        <span>$${(tow.quoted_price - tow.platform_fee - tow.stripe_fee).toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Service Fee:</span>
+                        <span>$${tow.platform_fee.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Processing Fee:</span>
+                        <span>$${tow.stripe_fee.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between text-xl font-bold">
+                    <span>Total:</span>
+                    <span>$${tow.quoted_price.toFixed(2)}</span>
+                </div>
+
+                <div class="mt-6 p-4 bg-green-50 rounded-lg text-center">
+                    <p class="text-green-800 font-medium">✓ Payment Successful</p>
+                    <p class="text-sm text-green-700">Charged to card ending in ****</p>
+                </div>
+
+                <div class="mt-6 text-xs text-gray-500 text-center">
+                    Thank you for using TowNow! Questions? Contact support@townow.com
+                </div>
+            `;
+        }
+
+        loadReceipt();
+    </script>
+</body>
+</html>

@@ -15,6 +15,7 @@ from app.services.pricing_service import PricingService
 from app.services.matching_service import MatchingService
 from app.services.payment_service import PaymentService
 from app.services.notification_service import NotificationService
+from app.services.email_service import EmailService
 from app.models import User, TowRequest, TowStatus, PaymentStatus
 from app.utils.geo import calculate_distance
 from typing import List
@@ -167,25 +168,27 @@ async def create_simple_tow_request(
             try:
                 # Charge immediately using saved payment method
                 payment_intent = stripe.PaymentIntent.create(
-                    amount=int(pricing["customer_price"] * 100),  # to cents
+                    amount=int(pricing["customer_price"] * 100),
                     currency='usd',
                     customer=current_user.stripe_customer_id,
                     payment_method=current_user.default_payment_method_id,
                     off_session=True,
                     confirm=True,
-                    description=f"Tow: {request.pickup_location} → {request.dropoff_location}",
+                    capture_method='manual',  # ← ONLY AUTHORIZE, DON'T CAPTURE YET
+                    description=f"Tow authorization: {request.pickup_location} → {request.dropoff_location}",
                     metadata={
                         'tow_request_id': str(tow_request.id),
-                        'customer_email': current_user.email
+                        'customer_email': current_user.email,
+                        'vehicle': f"{request.vehicle_year} {request.vehicle_make} {request.vehicle_model}"
                     }
                 )
-                
-                if payment_intent.status == 'succeeded':
+
+                if payment_intent.status == 'requires_capture':
                     tow_request.payment_intent_id = payment_intent.id
-                    tow_request.payment_status = PaymentStatus.CAPTURED
+                    tow_request.payment_status = PaymentStatus.AUTHORIZED  # ← Changed from CAPTURED
                     await db.commit()
                 else:
-                    raise HTTPException(400, "Payment failed")
+                    raise HTTPException(400, "Payment authorization failed")
                     
             except stripe.error.CardError as e:
                 tow_request.payment_status = PaymentStatus.FAILED
@@ -197,12 +200,13 @@ async def create_simple_tow_request(
         # Step 6: Return success response
         return {
             "success": True,
-            "message": "Tow request created and paid! 💳",
+            "message": "Tow request created! Payment authorized (you'll be charged when tow completes)",
             "request_id": str(tow_request.id),
             "estimated_price": float(pricing["customer_price"]),
+            "payment_status": "authorized",
             "distance_miles": float(distance_miles),
-            "service_type": "flatbed" if request.is_awd or request.is_lowered else "standard",
-            "status": "paid"
+            "service_type": "flatbed" if request.is_awd or request.is_lowered else "standard"
+            
         }
         
     except ValueError as e:
@@ -442,6 +446,7 @@ async def update_tow_status(
     
     # Update status and timestamps
     from datetime import datetime
+    from app.models import Driver
     tow_request.status = status_update.status
     
     if status_update.status == TowStatus.EN_ROUTE_PICKUP:
@@ -456,9 +461,46 @@ async def update_tow_status(
         tow_request.completed_at = datetime.utcnow()
         # Capture payment
         payment_service = PaymentService(db)
-        await payment_service.capture_payment(tow_id)
-    
-    await db.commit()
+        payment_captured = await payment_service.capture_payment(tow_id)
+        
+        if payment_captured:
+                # Get customer info
+                customer_result = await db.execute(
+                    select(User).where(User.id == tow_request.customer_id)
+                )
+                customer = customer_result.scalar_one_or_none()
+                
+                # Get driver info
+                driver_result = await db.execute(
+                    select(Driver).where(Driver.id == tow_request.driver_id)
+                )
+                driver = driver_result.scalar_one_or_none()
+                
+                # Send receipt email
+                if customer:
+                    tow_data = {
+                        'id': str(tow_request.id),
+                        'completed_at': tow_request.completed_at,
+                        'vehicle_year': tow_request.vehicle_year,
+                        'vehicle_make': tow_request.vehicle_make,
+                        'vehicle_model': tow_request.vehicle_model,
+                        'pickup_address': tow_request.pickup_address,
+                        'dropoff_address': tow_request.dropoff_address,
+                        'distance_miles': tow_request.distance_miles,
+                        'quoted_price': tow_request.quoted_price,
+                        'platform_fee': tow_request.platform_fee,
+                        'stripe_fee': tow_request.stripe_fee,
+                        'driver_name': driver.user.name if driver and driver.user else 'Your Driver',
+                        'card_last4': '****'  # TODO: Get from Stripe
+                    }
+                    
+                    await EmailService.send_receipt_email(
+                        customer_email=customer.email,
+                        customer_name=customer.name,
+                        tow_data=tow_data
+                    )
+        
+        await db.commit()
     
     # Notify customer
     notification_service = NotificationService(db)
@@ -643,3 +685,65 @@ async def get_driver_active_tow(
         return None
     
     return TowRequestResponse.from_orm(tow)
+
+@router.get("/{tow_id}/tracking")
+async def get_tow_tracking(
+    tow_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get real-time tracking info for active tow"""
+    
+    # Get tow request
+    result = await db.execute(
+        select(TowRequest).where(TowRequest.id == tow_id)
+    )
+    tow = result.scalar_one_or_none()
+    
+    if not tow:
+        raise HTTPException(404, "Tow request not found")
+    
+    # Verify authorization
+    if tow.customer_id != current_user.id:
+        raise HTTPException(403, "Not authorized")
+    
+    from app.models import Driver
+    
+    # Get driver's current location
+    if tow.driver_id:
+        driver_result = await db.execute(
+            select(Driver).where(Driver.id == tow.driver_id)
+        )
+        driver = driver_result.scalar_one_or_none()
+        
+        if driver:
+            return {
+                "tow_id": str(tow.id),
+                "status": tow.status,
+                "driver_location": {
+                    "latitude": float(driver.current_latitude) if driver.current_latitude else None,
+                    "longitude": float(driver.current_longitude) if driver.current_longitude else None,
+                    "updated_at": driver.updated_at
+                },
+                "pickup_location": {
+                    "latitude": float(tow.pickup_latitude),
+                    "longitude": float(tow.pickup_longitude),
+                    "address": tow.pickup_address
+                },
+                "dropoff_location": {
+                    "latitude": float(tow.dropoff_latitude),
+                    "longitude": float(tow.dropoff_longitude),
+                    "address": tow.dropoff_address
+                },
+                "driver_info": {
+                    "name": driver.user.name if driver.user else "Driver",
+                    "rating": float(driver.rating) if driver.rating else None
+                },
+                "estimated_arrival": None  # TODO: Calculate ETA
+            }
+    
+    return {
+        "tow_id": str(tow.id),
+        "status": tow.status,
+        "message": "Driver not yet assigned"
+    }

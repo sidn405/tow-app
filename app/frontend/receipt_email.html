@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border: 1px solid #e5e7eb;
+        }
+        .receipt-box {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            font-size: 20px;
+            font-weight: bold;
+            border-top: 2px solid #333;
+            margin-top: 10px;
+        }
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 style="margin: 0; font-size: 32px;">⚡ TowNow</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">Your Tow Receipt</p>
+    </div>
+
+    <div class="content">
+        <h2>Thank you for using TowNow!</h2>
+        <p>Your tow has been completed successfully. Here's your receipt:</p>
+
+        <div class="receipt-box">
+            <p><strong>Receipt #{{ receipt_number }}</strong></p>
+            <p style="color: #6b7280; font-size: 14px;">{{ completion_date }}</p>
+        </div>
+
+        <h3>Service Details</h3>
+        <div class="detail-row">
+            <span>Vehicle:</span>
+            <span><strong>{{ vehicle }}</strong></span>
+        </div>
+        <div class="detail-row">
+            <span>From:</span>
+            <span>{{ pickup_address }}</span>
+        </div>
+        <div class="detail-row">
+            <span>To:</span>
+            <span>{{ dropoff_address }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Distance:</span>
+            <span>{{ distance_miles }} miles</span>
+        </div>
+        <div class="detail-row">
+            <span>Driver:</span>
+            <span>{{ driver_name }}</span>
+        </div>
+
+        <h3 style="margin-top: 30px;">Payment Breakdown</h3>
+        <div class="detail-row">
+            <span>Base Service:</span>
+            <span>${{ base_price }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Service Fee:</span>
+            <span>${{ platform_fee }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Processing Fee:</span>
+            <span>${{ stripe_fee }}</span>
+        </div>
+        <div class="total-row">
+            <span>Total Charged:</span>
+            <span>${{ total_price }}</span>
+        </div>
+
+        <p style="background: #dcfce7; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            ✓ Payment successful - charged to card ending in {{ card_last4 }}
+        </p>
+
+        <div style="text-align: center;">
+            <a href="{{ receipt_url }}" class="button">View Full Receipt</a>
+        </div>
+
+        <div class="footer">
+            <p>Questions about your tow? Reply to this email or contact us at support@townow.com</p>
+            <p style="margin-top: 10px;">© 2026 TowNow. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
