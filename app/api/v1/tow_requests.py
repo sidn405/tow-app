@@ -95,13 +95,20 @@ async def create_simple_tow_request(
         )
         
         # Step 3: Calculate pricing
-        pricing_service = PricingService(db)
-        pricing = await pricing_service.calculate_tow_price(
-            distance_miles=distance_miles,
-            service_type_id=mapped_data["service_type_id"],
-            vehicle_type_id=mapped_data["vehicle_type_id"],
-            tow_reason_id=mapped_data["tow_reason_id"]
-        )
+        try:
+            pricing_service = PricingService(db)
+            pricing = await pricing_service.calculate_tow_price(
+                distance_miles=distance_miles,
+                service_type_id=mapped_data["service_type_id"],
+                vehicle_type_id=mapped_data["vehicle_type_id"],
+                tow_reason_id=mapped_data["tow_reason_id"]
+            )
+        except Exception as e:
+            print(f"PRICING ERROR: {str(e)}")
+            print(f"PRICING ERROR TYPE: {type(e)}")
+            import traceback
+            traceback.print_exc()
+            raise
         
         # Step 4: Create TowRequest record
         tow_request = TowRequest(
