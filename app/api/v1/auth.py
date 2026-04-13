@@ -46,17 +46,19 @@ async def register(
             detail="Phone number already registered"
         )
         
+    full_name = f"{user_data.first_name} {user_data.last_name}"  # ← Combine names
+        
     # Create Stripe customer with payment method
     stripe_customer_id = None
     default_payment_method_id = None
-    full_name = f"{user_data.first_name} {user_data.last_name}"  # ← Combine names
+    
     
     
     if user_data.payment_method_id:
         try:
             stripe_customer = stripe.Customer.create(
                 email=user_data.email,
-                name=user_data.name,
+                name=full_name,
                 phone=user_data.phone,
                 payment_method=user_data.payment_method_id,
                 invoice_settings={'default_payment_method': user_data.payment_method_id}
