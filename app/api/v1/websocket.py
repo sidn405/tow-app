@@ -6,7 +6,6 @@ from app.models import TowRequest, LocationHistory
 from typing import Dict, List
 import json
 from uuid import UUID
-from geoalchemy2.elements import WKTElement
 from datetime import datetime
 
 router = APIRouter()
