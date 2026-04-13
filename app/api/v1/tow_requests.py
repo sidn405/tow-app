@@ -182,7 +182,7 @@ async def create_simple_tow_request(
                 
                 if payment_intent.status == 'succeeded':
                     tow_request.payment_intent_id = payment_intent.id
-                    tow_request.payment_status = PaymentStatus.PAID
+                    tow_request.payment_status = PaymentStatus.CAPTURED
                     await db.commit()
                 else:
                     raise HTTPException(400, "Payment failed")
