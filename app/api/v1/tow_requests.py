@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.database import get_db
 
-from app.api.v1.auth import get_current_user
 from app.dependencies import get_current_user, get_current_customer, get_current_driver
 from app.schemas.tow_request import (
     TowQuoteRequest, TowQuoteResponse, TowRequestCreate,
