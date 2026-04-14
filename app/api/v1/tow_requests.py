@@ -634,12 +634,12 @@ async def rate_tow(
     await db.commit()
     return {"message": "Rating submitted successfully"}
 
-@router.get("/customer/history", response_model=List[TowRequestResponse])
+@router.get("/customer/history")  # Remove response_model for now
 async def get_customer_tow_history(
     skip: int = 0,
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_customer)
+    current_user: User = Depends(get_current_user)  # ← Use get_current_user instead
 ):
     """Get customer's tow history"""
     result = await db.execute(
@@ -650,7 +650,21 @@ async def get_customer_tow_history(
         .limit(limit)
     )
     tows = result.scalars().all()
-    return [TowRequestResponse.from_orm(tow) for tow in tows]
+    
+    # Return as dict instead of complex response model
+    return [{
+        "id": str(tow.id),
+        "vehicle_year": tow.vehicle_year,
+        "vehicle_make": tow.vehicle_make,
+        "vehicle_model": tow.vehicle_model,
+        "pickup_address": tow.pickup_address,
+        "dropoff_address": tow.dropoff_address,
+        "quoted_price": float(tow.quoted_price),
+        "distance_miles": float(tow.distance_miles),
+        "status": tow.status,
+        "payment_status": tow.payment_status,
+        "created_at": tow.created_at.isoformat()
+    } for tow in tows]
 
 @router.get("/driver/active")
 async def get_driver_active_tow(
