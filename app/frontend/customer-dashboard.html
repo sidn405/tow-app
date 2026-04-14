@@ -433,14 +433,27 @@
         // Load tow history on page load
         async function loadTowHistory() {
             try {
+                const token = localStorage.getItem('token');  // ← Make sure token exists
+        
+                if (!token) {
+                    console.log('No token found');
+                    return;
+                }
+
                 const response = await fetch('/api/v1/tows/customer/history', {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`  // ← Must include this
                     }
                 });
 
+                if (!response.ok) {
+                    console.error('History fetch failed:', response.status);
+                    return;
+                }
+
                 const tows = await response.json();
                 const historyDiv = document.getElementById('towHistory');
+                console.log('Tows loaded:', tows);  // ← Debug
 
                 if (tows.length === 0) {
                     historyDiv.innerHTML = `
@@ -608,6 +621,11 @@
         function trackTow(towId) {
             window.open(`/tracking.html?id=${towId}`, '_blank');
         }
+
+        // At the bottom of your script
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTowHistory();
+        });
     </script>
 </body>
 </html>
