@@ -74,17 +74,26 @@ class AuthService:
     @staticmethod
     async def get_current_user(db: AsyncSession, token: str) -> Optional[User]:
         """Get current user from JWT token"""
+        print(f"🔍 AuthService.get_current_user called")
+        
         payload = AuthService.decode_token(token)
+        print(f"🔍 Payload decoded: {payload is not None}")
         
         if not payload or payload.get("type") != "access":
+            print(f"🔍 FAIL: Invalid payload or not access token. Type: {payload.get('type') if payload else 'None'}")
             return None
         
         user_id: str = payload.get("sub")
+        print(f"🔍 User ID from token: {user_id}")
+        
         if not user_id:
+            print(f"🔍 FAIL: No user_id in payload")
             return None
         
         result = await db.execute(
             select(User).where(User.id == UUID(user_id), User.is_active == True)
         )
         user = result.scalar_one_or_none()
+        print(f"🔍 User from DB: {user.email if user else 'None'}")
+        
         return user
