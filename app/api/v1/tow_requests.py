@@ -47,7 +47,7 @@ class SimpleTowRequest(BaseModel):
     pickup_notes: Optional[str] = None  # ← Add this
     dropoff_notes: Optional[str] = None  # ← Add this
 
-router = APIRouter(prefix="/api/v1/tows", tags=["Tow Requests"])
+router = APIRouter(prefix="/tows", tags=["Tow Requests"])
 
 @router.post("/quote", response_model=TowQuoteResponse)
 async def get_tow_quote(
