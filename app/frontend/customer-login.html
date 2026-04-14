@@ -99,33 +99,34 @@
             
             const formData = {
                 email: document.getElementById('email').value,
-                password: document.getElementById('password').value,
-                user_type: 'customer'
+                password: document.getElementById('password').value
             };
             
             try {
                 const response = await fetch('/api/v1/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify(formData)  // ← Use formData, not {email, password}
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // CLEAR OLD TOKEN FIRST
+                    // Clear old token and save new one
                     localStorage.removeItem('token');
-                    
-                    // THEN SAVE NEW TOKEN
                     localStorage.setItem('token', data.access_token);
                     
                     window.location.href = '/customer-dashboard.html';
                 } else {
-                    alert('Invalid credentials');
+                    const error = await response.json();
+                    alert(error.detail || 'Invalid credentials');
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 alert('Login failed');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
             }
         });
     </script>
