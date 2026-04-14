@@ -641,6 +641,8 @@ async def get_customer_tow_history(
     current_user: User = Depends(get_current_user)  # ← Use get_current_user instead
 ):
     """Get customer's tow history"""
+    print(f"🔍 HISTORY ENDPOINT HIT - User ID: {current_user.id}, Email: {current_user.email}, Role: {current_user.role}")
+    
     result = await db.execute(
         select(TowRequest)
         .where(TowRequest.customer_id == current_user.id)
@@ -649,6 +651,8 @@ async def get_customer_tow_history(
         .limit(limit)
     )
     tows = result.scalars().all()
+    
+    print(f"🔍 Found {len(tows)} tows")
     
     # Return as dict instead of complex response model
     return [{

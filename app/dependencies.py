@@ -25,16 +25,27 @@ async def get_current_user(
     
     return user
 
-async def get_current_customer(
-    current_user: User = Depends(get_current_user)
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db)
 ) -> User:
-    """Ensure current user is a customer"""
-    if current_user.role != UserRole.CUSTOMER:
+    """Get current authenticated user from JWT token"""
+    token = credentials.credentials
+    print(f"DEBUG - Token received: {token[:20]}...")  # Print first 20 chars
+    
+    user = await AuthService.get_current_user(db, token)
+    
+    print(f"DEBUG - User found: {user.email if user else 'None'}")
+    print(f"DEBUG - User role: {user.role if user else 'None'}")
+    
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Customer access required."
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    return current_user
+    
+    return user
 
 async def get_current_driver(
     current_user: User = Depends(get_current_user)

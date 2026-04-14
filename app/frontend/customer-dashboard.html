@@ -452,8 +452,10 @@
                 }
 
                 const tows = await response.json();
-                const historyDiv = document.getElementById('towHistory');
                 console.log('Tows loaded:', tows);  // ← Debug
+                
+                const historyDiv = document.getElementById('towHistory');
+                
 
                 if (tows.length === 0) {
                     historyDiv.innerHTML = `
