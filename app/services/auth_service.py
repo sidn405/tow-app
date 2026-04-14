@@ -50,9 +50,19 @@ class AuthService:
     def decode_token(token: str) -> Optional[dict]:
         """Decode and verify JWT token"""
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]                                 
+            )
+            
+            print(f"🔍 Decode SUCCESS: {payload}")
             return payload
-        except JWTError:
+        except jwt.ExpiredSignatureError:
+            print(f"🔍 DECODE FAIL: Token expired")
+            return None
+        except jwt.JWTError as e:
+            print(f"🔍 DECODE FAIL: JWT Error: {e}")
+            return None
+        except Exception as e:
+            print(f"🔍 DECODE FAIL: Unexpected error: {type(e).__name__}: {e}")
             return None
     
     @staticmethod
