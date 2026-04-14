@@ -106,29 +106,26 @@
             try {
                 const response = await fetch('/api/v1/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
                 });
                 
-                const data = await response.json();
-                
                 if (response.ok) {
-                    // Store token
-                    localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('user_type', 'customer');
-                    window.location.href = 'customer-dashboard.html';
+                    const data = await response.json();
+                    
+                    // CLEAR OLD TOKEN FIRST
+                    localStorage.removeItem('token');
+                    
+                    // THEN SAVE NEW TOKEN
+                    localStorage.setItem('token', data.access_token);
+                    
+                    window.location.href = '/customer-dashboard.html';
                 } else {
-                    alert(data.detail || 'Invalid email or password');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
+                    alert('Invalid credentials');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Network error. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
+                console.error('Login error:', error);
+                alert('Login failed');
             }
         });
     </script>
