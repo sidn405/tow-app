@@ -278,7 +278,7 @@
         };
 
         // Check if user is logged in
-        const token = localStorage.getItem('auth_token');
+        const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = 'customer-login.html';
         }
@@ -453,7 +453,7 @@
 
                 const tows = await response.json();
                 console.log('Tows loaded:', tows);  // ← Debug
-                
+
                 const historyDiv = document.getElementById('towHistory');
                 
 
@@ -610,7 +610,7 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
             window.location.href = 'customer-login.html';
         }
 
