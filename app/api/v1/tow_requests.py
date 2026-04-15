@@ -389,7 +389,7 @@ async def create_tow_request(
     
     return TowRequestResponse.from_orm(tow_request)
 
-@router.get("/{tow_id}", response_model=TowRequestResponse)
+@router.get("/{tow_id}")
 async def get_tow_request(
     tow_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -399,23 +399,36 @@ async def get_tow_request(
     result = await db.execute(
         select(TowRequest).where(TowRequest.id == tow_id)
     )
-    tow_request = result.scalar_one_or_none()
+    tow = result.scalar_one_or_none()
     
-    if not tow_request:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tow request not found"
-        )
+    if not tow:
+        raise HTTPException(404, "Tow request not found")
     
     # Check authorization
-    if tow_request.customer_id != current_user.id and \
-       (not current_user.driver_profile or tow_request.driver_id != current_user.driver_profile.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this tow request"
-        )
+    if tow.customer_id != current_user.id:
+        raise HTTPException(403, "Not authorized")
     
-    return TowRequestResponse.from_orm(tow_request)
+    # Return dict instead of Pydantic model to avoid relationship loading issues
+    return {
+        "id": str(tow.id),
+        "customer_id": str(tow.customer_id),
+        "driver_id": str(tow.driver_id) if tow.driver_id else None,
+        "status": tow.status,
+        "payment_status": tow.payment_status,
+        "vehicle_year": tow.vehicle_year,
+        "vehicle_make": tow.vehicle_make,
+        "vehicle_model": tow.vehicle_model,
+        "pickup_address": tow.pickup_address,
+        "pickup_latitude": float(tow.pickup_latitude),
+        "pickup_longitude": float(tow.pickup_longitude),
+        "dropoff_address": tow.dropoff_address,
+        "dropoff_latitude": float(tow.dropoff_latitude),
+        "dropoff_longitude": float(tow.dropoff_longitude),
+        "quoted_price": float(tow.quoted_price),
+        "distance_miles": float(tow.distance_miles),
+        "created_at": tow.created_at.isoformat() if tow.created_at else None,
+        "completed_at": tow.completed_at.isoformat() if tow.completed_at else None
+    }
 
 @router.put("/{tow_id}/status")
 async def update_tow_status(
@@ -511,6 +524,57 @@ async def update_tow_status(
     )
     
     return {"message": "Status updated successfully"}
+
+@router.get("/{tow_id}/receipt")
+async def get_tow_receipt(
+    tow_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get receipt for completed tow"""
+    result = await db.execute(
+        select(TowRequest).where(TowRequest.id == tow_id)
+    )
+    tow = result.scalar_one_or_none()
+    
+    if not tow:
+        raise HTTPException(404, "Tow request not found")
+    
+    # Check authorization
+    if tow.customer_id != current_user.id:
+        raise HTTPException(403, "Not authorized")
+    
+    if tow.payment_status != PaymentStatus.CAPTURED:
+        raise HTTPException(400, "Receipt only available for completed payments")
+    
+    # Get driver info if assigned
+    driver_name = "TowNow Driver"
+    if tow.driver_id:
+        from app.models import Driver
+        driver_result = await db.execute(
+            select(Driver).where(Driver.id == tow.driver_id)
+        )
+        driver = driver_result.scalar_one_or_none()
+        if driver and driver.user:
+            driver_name = driver.user.name
+    
+    return {
+        "id": str(tow.id),
+        "customer_name": current_user.name,
+        "customer_email": current_user.email,
+        "completed_at": tow.completed_at.isoformat() if tow.completed_at else None,
+        "vehicle": f"{tow.vehicle_year} {tow.vehicle_make} {tow.vehicle_model}",
+        "pickup_address": tow.pickup_address,
+        "dropoff_address": tow.dropoff_address,
+        "distance_miles": float(tow.distance_miles),
+        "quoted_price": float(tow.quoted_price),
+        "platform_fee": float(tow.platform_fee) if tow.platform_fee else 0,
+        "stripe_fee": float(tow.stripe_fee) if tow.stripe_fee else 0,
+        "total": float(tow.quoted_price),
+        "driver_name": driver_name,
+        "payment_status": tow.payment_status,
+        "payment_intent_id": tow.payment_intent_id
+    }
 
 @router.post("/{tow_id}/cancel")
 async def cancel_tow_request(
