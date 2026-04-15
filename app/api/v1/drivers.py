@@ -13,8 +13,11 @@ from app.services.matching_service import MatchingService
 from typing import List
 from uuid import UUID
 from decimal import Decimal
+import logging
 
 router = APIRouter(prefix="/drivers", tags=["Drivers"])
+
+logger = logging.getLogger(__name__)
 
 @router.get("/available-requests")
 async def get_available_tow_requests(
@@ -142,43 +145,55 @@ async def update_driver_location(
     
     return {"message": "Location updated successfully"}
 
-@router.post("/apply", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/apply", status_code=status.HTTP_201_CREATED)
 async def apply_as_driver(
     driver_data: DriverCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Apply to become a driver"""
-    # Check if already a driver
     if current_user.driver_profile:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already has a driver profile"
-        )
-    
-    # Create driver profile
+        raise HTTPException(status_code=400, detail="User already has a driver profile")
+
     driver = Driver(
         user_id=current_user.id,
         license_number=driver_data.license_number,
         license_state=driver_data.license_state,
         license_expiry=driver_data.license_expiry,
+        license_class=getattr(driver_data, 'license_class', None),
+        vehicle_year=getattr(driver_data, 'vehicle_year', None),
+        vehicle_make=getattr(driver_data, 'vehicle_make', None),
+        vehicle_model=getattr(driver_data, 'vehicle_model', None),
+        vehicle_type=getattr(driver_data, 'vehicle_type', None),
+        vin=getattr(driver_data, 'vin', None),
+        license_plate=getattr(driver_data, 'license_plate', None),
+        plate_state=getattr(driver_data, 'plate_state', None),
+        insurance_provider=getattr(driver_data, 'insurance_provider', None),
+        policy_number=getattr(driver_data, 'policy_number', None),
+        policy_expiry=getattr(driver_data, 'policy_expiry', None),
         company_name=driver_data.company_name,
-        company_ein=driver_data.company_ein
+        company_ein=driver_data.company_ein,
+        approval_status='pending'
     )
-    
+
     db.add(driver)
     await db.commit()
     await db.refresh(driver)
-    
-    # Setup Stripe Connect account
-    payment_service = PaymentService(db)
-    onboarding_url = await payment_service.setup_driver_connect_account(
-        driver_id=driver.id,
-        email=current_user.email
-    )
-    
+
+    # Stripe Connect — non-blocking, log failure but don't crash
+    onboarding_url = None
+    try:
+        payment_service = PaymentService(db)
+        onboarding_url = await payment_service.setup_driver_connect_account(
+            driver_id=driver.id,
+            email=current_user.email
+        )
+    except Exception as e:
+        logger.warning(f"Stripe Connect setup failed for driver {driver.id}: {e}")
+
     return {
-        **DriverResponse.from_orm(driver).dict(),
+        "id": str(driver.id),
+        "status": "pending",
+        "message": "Driver application submitted successfully",
         "stripe_onboarding_url": onboarding_url
     }
 
