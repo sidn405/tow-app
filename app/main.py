@@ -10,49 +10,38 @@ from app.api.v1 import auth, drivers, tow_requests, websocket
 from app.api.v1 import config
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle events"""
-    # Startup
     logger.info("Starting up...")
+    # add temporarily inside lifespan, after init_db()
+    logger.info(f"API prefix: '{settings.API_V1_PREFIX}'")
+    logger.info(f"Drivers routes: {[r.path for r in app.routes if 'driver' in str(r.path)]}")
     await init_db()
+    await init_redis()
     yield
-    # Shutdown
     logger.info("Shutting down...")
     await close_db()
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    lifespan=lifespan
+    lifespan=lifespan  # use ONLY lifespan, not on_event
 )
 
-@app.on_event("startup")
-async def startup():
-    await init_db()
-    await init_redis()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await close_db()
-
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8000",
-        "https://tow-app-production-38dc.up.railway.app",  # Your new URL
+        "https://tow-app-production-38dc.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global exception: {exc}", exc_info=True)
@@ -61,7 +50,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal server error"}
     )
 
-# Health check
+# ── API routes FIRST ──────────────────────────────────────
 @app.get("/health")
 async def health_check():
     return {
@@ -69,18 +58,18 @@ async def health_check():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION
     }
-    
+
 @app.get("/api/v1/config/mapbox-token")
 async def get_mapbox_token():
     return {"mapbox_token": settings.MAPBOX_PUBLIC_TOKEN}
 
-# Include routers
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(drivers.router, prefix=settings.API_V1_PREFIX)
 app.include_router(tow_requests.router, prefix=settings.API_V1_PREFIX)
 app.include_router(websocket.router)
 app.include_router(config.router)
-    
+
+# ── Static files LAST — must come after ALL API routes ────
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
