@@ -16,6 +16,132 @@ from decimal import Decimal
 
 router = APIRouter(prefix="/drivers", tags=["Drivers"])
 
+@router.get("/available-requests")
+async def get_available_tow_requests(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_driver)
+):
+    """Get available tow requests near the driver"""
+    if not current_user.driver_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver profile not found"
+        )
+    
+    # Get pending offers for this driver
+    from app.models import TowRequestOffer, OfferResponse
+    result = await db.execute(
+        select(TowRequestOffer)
+        .where(
+            TowRequestOffer.driver_id == current_user.driver_profile.id,
+            TowRequestOffer.response == OfferResponse.PENDING
+        )
+        .order_by(TowRequestOffer.offered_at.desc())
+    )
+    offers = result.scalars().all()
+    
+    # Get full tow request details
+    tow_requests = []
+    for offer in offers:
+        tow_result = await db.execute(
+            select(TowRequest).where(TowRequest.id == offer.tow_request_id)
+        )
+        tow = tow_result.scalar_one_or_none()
+        if tow:
+            tow_requests.append({
+                "tow_request_id": tow.id,
+                "pickup_address": tow.pickup_address,
+                "dropoff_address": tow.dropoff_address,
+                "distance_miles": float(tow.distance_miles),
+                "driver_payout": float(tow.driver_payout),
+                "distance_from_pickup": float(offer.distance_from_pickup),
+                "offered_at": offer.offered_at
+            })
+    
+    return tow_requests
+
+@router.post("/toggle-online")
+async def toggle_online_status(
+    status_data: DriverToggleOnline,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_driver)
+):
+    """Toggle driver online/offline status"""
+    if not current_user.driver_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver profile not found"
+        )
+    
+    driver = current_user.driver_profile
+    driver.is_online = status_data.is_online
+    
+    # Update location if going online - CHANGED to use lat/lng
+    if status_data.is_online and status_data.latitude and status_data.longitude:
+        driver.current_latitude = status_data.latitude
+        driver.current_longitude = status_data.longitude
+    
+    await db.commit()
+    
+    return {
+        "is_online": driver.is_online,
+        "message": "Status updated successfully"
+    }
+ 
+ 
+@router.put("/location")
+async def update_driver_location(
+    location: DriverLocationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_driver)
+):
+    """Update driver's current location (background updates)"""
+    if not current_user.driver_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver profile not found"
+        )
+    
+    driver = current_user.driver_profile
+    # CHANGED to use lat/lng columns
+    driver.current_latitude = location.latitude
+    driver.current_longitude = location.longitude
+    
+    await db.commit()
+    
+    # If driver has active tow, update location history
+    result = await db.execute(
+        select(TowRequest)
+        .where(
+            TowRequest.driver_id == driver.id,
+            TowRequest.status.in_([
+                TowStatus.ACCEPTED,
+                TowStatus.EN_ROUTE_PICKUP,
+                TowStatus.VEHICLE_LOADED,
+                TowStatus.EN_ROUTE_DROPOFF
+            ])
+        )
+    )
+    active_tow = result.scalar_one_or_none()
+    
+    if active_tow:
+        from app.models import LocationHistory
+        location_record = LocationHistory(
+            tow_request_id=active_tow.id,
+            driver_id=driver.id,
+            # CHANGED to use lat/lng columns
+            latitude=location.latitude,
+            longitude=location.longitude,
+            speed=location.speed,
+            heading=location.heading
+        )
+        db.add(location_record)
+        await db.commit()
+        
+        # Broadcast location update via WebSocket (handled by WebSocket endpoint)
+    
+    return {"message": "Location updated successfully"}
+
 @router.post("/apply", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
 async def apply_as_driver(
     driver_data: DriverCreate,
@@ -106,131 +232,6 @@ async def update_driver_profile(
     
     return DriverResponse.from_orm(driver)
 
-@router.post("/toggle-online")
-async def toggle_online_status(
-    status_data: DriverToggleOnline,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_driver)
-):
-    """Toggle driver online/offline status"""
-    if not current_user.driver_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Driver profile not found"
-        )
-    
-    driver = current_user.driver_profile
-    driver.is_online = status_data.is_online
-    
-    # Update location if going online - CHANGED to use lat/lng
-    if status_data.is_online and status_data.latitude and status_data.longitude:
-        driver.current_latitude = status_data.latitude
-        driver.current_longitude = status_data.longitude
-    
-    await db.commit()
-    
-    return {
-        "is_online": driver.is_online,
-        "message": "Status updated successfully"
-    }
- 
- 
-@router.put("/location")
-async def update_driver_location(
-    location: DriverLocationUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_driver)
-):
-    """Update driver's current location (background updates)"""
-    if not current_user.driver_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Driver profile not found"
-        )
-    
-    driver = current_user.driver_profile
-    # CHANGED to use lat/lng columns
-    driver.current_latitude = location.latitude
-    driver.current_longitude = location.longitude
-    
-    await db.commit()
-    
-    # If driver has active tow, update location history
-    result = await db.execute(
-        select(TowRequest)
-        .where(
-            TowRequest.driver_id == driver.id,
-            TowRequest.status.in_([
-                TowStatus.ACCEPTED,
-                TowStatus.EN_ROUTE_PICKUP,
-                TowStatus.VEHICLE_LOADED,
-                TowStatus.EN_ROUTE_DROPOFF
-            ])
-        )
-    )
-    active_tow = result.scalar_one_or_none()
-    
-    if active_tow:
-        from app.models import LocationHistory
-        location_record = LocationHistory(
-            tow_request_id=active_tow.id,
-            driver_id=driver.id,
-            # CHANGED to use lat/lng columns
-            latitude=location.latitude,
-            longitude=location.longitude,
-            speed=location.speed,
-            heading=location.heading
-        )
-        db.add(location_record)
-        await db.commit()
-        
-        # Broadcast location update via WebSocket (handled by WebSocket endpoint)
-    
-    return {"message": "Location updated successfully"}
-
-@router.get("/available-requests")
-async def get_available_tow_requests(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_driver)
-):
-    """Get available tow requests near the driver"""
-    if not current_user.driver_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Driver profile not found"
-        )
-    
-    # Get pending offers for this driver
-    from app.models import TowRequestOffer, OfferResponse
-    result = await db.execute(
-        select(TowRequestOffer)
-        .where(
-            TowRequestOffer.driver_id == current_user.driver_profile.id,
-            TowRequestOffer.response == OfferResponse.PENDING
-        )
-        .order_by(TowRequestOffer.offered_at.desc())
-    )
-    offers = result.scalars().all()
-    
-    # Get full tow request details
-    tow_requests = []
-    for offer in offers:
-        tow_result = await db.execute(
-            select(TowRequest).where(TowRequest.id == offer.tow_request_id)
-        )
-        tow = tow_result.scalar_one_or_none()
-        if tow:
-            tow_requests.append({
-                "tow_request_id": tow.id,
-                "pickup_address": tow.pickup_address,
-                "dropoff_address": tow.dropoff_address,
-                "distance_miles": float(tow.distance_miles),
-                "driver_payout": float(tow.driver_payout),
-                "distance_from_pickup": float(offer.distance_from_pickup),
-                "offered_at": offer.offered_at
-            })
-    
-    return tow_requests
 
 @router.post("/accept-request/{request_id}")
 async def accept_tow_request(

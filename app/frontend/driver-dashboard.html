@@ -189,17 +189,18 @@
             } else {
                 button.textContent = 'Go Online';
                 button.className = 'px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold';
-                document.getElementById('requestsList').innerHTML = '<div class="text-center text-gray-500 py-8"><p>Go online to see available tow requests</p></div>';
+                document.getElementById('requestsList').innerHTML = 
+                    '<div class="text-center text-gray-500 py-8"><p>Go online to see available tow requests</p></div>';
             }
 
             try {
-                await fetch('/api/v1/drivers/online-status', {
-                    method: 'PUT',
+                await fetch('/api/v1/drivers/toggle-online', {  // <-- correct endpoint
+                    method: 'POST',                              // <-- POST not PUT
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ online: isOnline })
+                    body: JSON.stringify({ is_online: isOnline })  // <-- is_online not online
                 });
             } catch (error) {
                 console.error('Error updating status:', error);
