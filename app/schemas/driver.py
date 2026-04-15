@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from datetime import datetime, date
 from uuid import UUID
 from decimal import Decimal
@@ -11,6 +11,29 @@ class DriverCreate(BaseModel):
     license_expiry: date
     company_name: Optional[str] = None
     company_ein: Optional[str] = None
+    
+    # New fields
+    license_class: Optional[str] = None
+    cdl_endorsements: Optional[List[str]] = []
+    towing_experience_years: Optional[str] = None
+
+    # Vehicle
+    vehicle_year: Optional[int] = None
+    vehicle_make: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    vehicle_type: Optional[str] = None
+    vin: Optional[str] = None
+    license_plate: Optional[str] = None
+    plate_state: Optional[str] = None
+    tow_capacity_lbs: Optional[int] = None
+    awd_capable: Optional[bool] = False
+    special_considerations: Optional[str] = None
+
+    # Insurance
+    insurance_provider: Optional[str] = None
+    policy_number: Optional[str] = None
+    policy_effective: Optional[date] = None
+    policy_expiry: Optional[date] = None
 
 class DriverUpdate(BaseModel):
     license_number: Optional[str] = None
