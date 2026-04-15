@@ -3,6 +3,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from app.config import settings
 from app.models import User
@@ -80,7 +81,7 @@ class AuthService:
             return None
         
         return user
-    
+
     @staticmethod
     async def get_current_user(db: AsyncSession, token: str) -> Optional[User]:
         """Get current user from JWT token"""
@@ -101,7 +102,9 @@ class AuthService:
             return None
         
         result = await db.execute(
-            select(User).where(User.id == UUID(user_id), User.is_active == True)
+            select(User)
+            .options(selectinload(User.driver_profile))  # <-- only change
+            .where(User.id == UUID(user_id), User.is_active == True)
         )
         user = result.scalar_one_or_none()
         print(f"🔍 User from DB: {user.email if user else 'None'}")
