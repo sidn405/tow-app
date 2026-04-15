@@ -3,211 +3,1706 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Sign Up - TowNow</title>
+    <title>Driver Application - TowNow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --green-dark: #0d3321;
+            --green-mid: #155c3a;
+            --green-brand: #1a7a4a;
+            --green-bright: #22c55e;
+            --green-light: #dcfce7;
+            --accent: #f0a500;
+            --danger: #ef4444;
+            --surface: #ffffff;
+            --text-primary: #0f1a13;
+            --text-muted: #6b7280;
+            --border: #d1fae5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--green-dark);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 0%, rgba(34,197,94,0.18) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 100%, rgba(240,165,0,0.08) 0%, transparent 50%),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 39px,
+                    rgba(255,255,255,0.015) 40px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 39px,
+                    rgba(255,255,255,0.015) 40px
+                );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        h1, h2, h3, h4 { font-family: 'Syne', sans-serif; }
+
+        .card {
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(34,197,94,0.12);
+        }
+
+        .step-header {
+            background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+            border-radius: 20px 20px 0 0;
+            padding: 28px 36px;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            border: 2px solid rgba(255,255,255,0.25);
+            color: rgba(255,255,255,0.5);
+            background: transparent;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-dot.active {
+            background: var(--green-bright);
+            border-color: var(--green-bright);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
+        }
+
+        .step-dot.completed {
+            background: rgba(34,197,94,0.3);
+            border-color: var(--green-bright);
+            color: var(--green-bright);
+        }
+
+        .step-connector {
+            flex: 1;
+            height: 2px;
+            background: rgba(255,255,255,0.15);
+            transition: background 0.3s;
+        }
+
+        .step-connector.completed {
+            background: var(--green-bright);
+        }
+
+        .step-label {
+            font-size: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-top: 6px;
+            text-align: center;
+            width: 32px;
+            white-space: nowrap;
+            overflow: visible;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 36px;
+        }
+
+        .step-dot-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .step-dot.active + .step-label,
+        .step-dot.completed + .step-label {
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Form Fields */
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        label.field-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: 0.01em;
+        }
+
+        label.field-label span.req {
+            color: var(--green-brand);
+            margin-left: 2px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: #fafafa;
+            transition: all 0.2s;
+            outline: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--green-brand);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(26,122,74,0.1);
+        }
+
+        input.error, select.error {
+            border-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .error-msg {
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-msg.visible { display: block; }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: #f9fafb;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--green-brand);
+            background: var(--green-light);
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+        }
+
+        .upload-zone input[type="file"]:focus {
+            box-shadow: none;
+            border: none;
+        }
+
+        .upload-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--green-light);
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .upload-preview .file-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--green-dark);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .upload-preview .remove-btn {
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            background: none;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .upload-preview .remove-btn:hover { background: #fee2e2; }
+
+        /* Security badge */
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #166534;
+            font-weight: 500;
+        }
+
+        /* Banking notice */
+        .secure-notice {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        /* Toggle password */
+        .pw-wrapper {
+            position: relative;
+        }
+
+        .pw-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .pw-wrapper input { padding-right: 42px; }
+
+        /* Checkbox */
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .check-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            background: white;
+            padding: 0;
+            margin-top: 1px;
+            accent-color: var(--green-brand);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--green-brand), #15803d);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 28px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(26,122,74,0.35);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 24px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover { background: #e5e7eb; }
+
+        /* Section divider */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0 20px;
+        }
+
+        .section-divider span {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--green-brand);
+            white-space: nowrap;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        /* Review section */
+        .review-block {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+
+        .review-block h4 {
+            font-size: 13px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--green-brand);
+            margin-bottom: 12px;
+        }
+
+        .review-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+
+        .review-row:last-child { border-bottom: none; }
+        .review-row .rv-label { color: var(--text-muted); }
+        .review-row .rv-val { color: var(--text-primary); font-weight: 500; }
+
+        /* Strength meter */
+        .strength-meter {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: #e5e7eb;
+            transition: background 0.3s;
+        }
+
+        .strength-label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Tooltip */
+        .tooltip-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #d1fae5;
+            color: var(--green-brand);
+            font-size: 10px;
+            font-weight: 700;
+            cursor: help;
+            margin-left: 4px;
+            position: relative;
+        }
+
+        .tooltip-trigger:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111827;
+            color: white;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 100;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 400;
+        }
+
+        /* Slide transitions */
+        .step-panel {
+            display: none;
+            animation: slideIn 0.35s ease;
+        }
+
+        .step-panel.active { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .step-panel.back-anim { animation: slideInLeft 0.35s ease; }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* SSN/routing masking */
+        .masked-input-wrapper {
+            position: relative;
+        }
+
+        .masked-input-wrapper .reveal-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--green-brand);
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .masked-input-wrapper input { padding-right: 70px; }
+
+        /* License class pills */
+        .license-class-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .lc-pill {
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .lc-pill:hover { border-color: var(--green-brand); background: #f0fdf4; }
+
+        .lc-pill.selected {
+            border-color: var(--green-brand);
+            background: var(--green-light);
+            box-shadow: 0 0 0 2px rgba(26,122,74,0.15);
+        }
+
+        .lc-pill .lc-code {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--green-dark);
+        }
+
+        .lc-pill .lc-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        .lc-pill.selected .lc-code { color: var(--green-brand); }
+
+        /* Success */
+        .success-screen {
+            text-align: center;
+            padding: 48px 32px;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--green-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+    </style>
+</head>
+<body>
+    <div style="position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px;">
+
+        <!-- Logo -->
+        <div style="margin-bottom: 28px; text-align: center;">
+            <a href="index.html" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none;">
+                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="24" height="24" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <span style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; color: white; letter-spacing: -0.02em;">TowNow</span>
+            </a>
+            <p style="color: rgba(255,255,255,0.55); font-size: 14px; margin-top: 6px;">Driver Application Portal</p>
+        </div>
+
+        <!-- Card -->
+        <div class="card" style="width: 100%; max-width: 620px; overflow: visible;">
+
+            <!-- Step Header -->
+            <div class="step-header">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Application</div>
+                        <div id="stepTitle" style="font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: white;">Personal Information</div>
+                    </div>
+                    <div class="security-badge" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8);">
+                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                        256-bit Encrypted
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div style="display: flex; align-items: center; gap: 0; position: relative; padding-bottom: 24px;">
+                    <div class="step-dot-wrapper">
+                        <div class="step-dot active" id="dot1">1</div>
+                        <div class="step-label" style="color: rgba(255,255,255,0.9);">Personal</div>
+                    </div>
+                    <div class="step-connector" id="conn1"></div>
+                    <div class="step-dot-wrapper">
+                        <div class="step-dot" id="dot2">2</div>
+                        <div class="step-label">License</div>
+                    </div>
+                    <div class="step-connector" id="conn2"></div>
+                    <div class="step-dot-wrapper">
+                        <div class="step-dot" id="dot3">3</div>
+                        <div class="step-label">Vehicle</div>
+                    </div>
+                    <div class="step-connector" id="conn3"></div>
+                    <div class="step-dot-wrapper">
+                        <div class="step-dot" id="dot4">4</div>
+                        <div class="step-label">Documents</div>
+                    </div>
+                    <div class="step-connector" id="conn4"></div>
+                    <div class="step-dot-wrapper">
+                        <div class="step-dot" id="dot5">5</div>
+                        <div class="step-label">Banking</div>
+                    </div>
+                    <div class="step-connector" id="conn5"></div>
+                    <div class="step-dot-wrapper">
+                        <div class="step-dot" id="dot6">6</div>
+                        <div class="step-label">Review</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Body -->
+            <div style="padding: 32px 36px 28px;">
+
+                <!-- ===== STEP 1: PERSONAL ===== -->
+                <div class="step-panel active" id="panel1">
+                    <div class="field-group">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label class="field-label">First Name <span class="req">*</span></label>
+                                <input type="text" id="firstName" placeholder="John" autocomplete="given-name">
+                                <div class="error-msg" id="err-firstName">Please enter your first name.</div>
+                            </div>
+                            <div>
+                                <label class="field-label">Last Name <span class="req">*</span></label>
+                                <input type="text" id="lastName" placeholder="Doe" autocomplete="family-name">
+                                <div class="error-msg" id="err-lastName">Please enter your last name.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Email Address <span class="req">*</span></label>
+                        <input type="email" id="email" placeholder="john@example.com" autocomplete="email">
+                        <div class="error-msg" id="err-email">Please enter a valid email address.</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Phone Number <span class="req">*</span></label>
+                        <input type="tel" id="phone" placeholder="(555) 123-4567" autocomplete="tel" maxlength="14">
+                        <div class="error-msg" id="err-phone">Please enter a valid 10-digit phone number.</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="field-group">
+                            <label class="field-label">Password <span class="req">*</span></label>
+                            <div class="pw-wrapper">
+                                <input type="password" id="password" placeholder="Min. 8 characters" autocomplete="new-password" minlength="8">
+                                <button type="button" class="pw-toggle" onclick="togglePw('password', this)" title="Show/hide password">
+                                    <svg id="pwEye1" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <div id="strength-bars" class="strength-meter" style="display:none">
+                                <div class="strength-bar" id="sb1"></div>
+                                <div class="strength-bar" id="sb2"></div>
+                                <div class="strength-bar" id="sb3"></div>
+                                <div class="strength-bar" id="sb4"></div>
+                            </div>
+                            <div class="strength-label" id="strength-label" style="display:none; color:#9ca3af;"></div>
+                            <div class="error-msg" id="err-password">Password must be at least 8 characters.</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Confirm Password <span class="req">*</span></label>
+                            <div class="pw-wrapper">
+                                <input type="password" id="confirmPassword" placeholder="Re-enter password" autocomplete="new-password">
+                                <button type="button" class="pw-toggle" onclick="togglePw('confirmPassword', this)" title="Show/hide password">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <div class="error-msg" id="err-confirmPassword">Passwords do not match.</div>
+                        </div>
+                    </div>
+
+                    <div class="field-group" style="margin-top: 8px;">
+                        <label class="check-item">
+                            <input type="checkbox" id="termsCheck">
+                            <span style="font-size: 13px; color: #4b5563; line-height: 1.5;">I agree to TowNow's <a href="#" style="color: var(--green-brand); font-weight: 500;">Terms of Service</a> and <a href="#" style="color: var(--green-brand); font-weight: 500;">Privacy Policy</a></span>
+                        </label>
+                        <div class="error-msg" id="err-terms">You must accept the terms to continue.</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+                        <button class="btn-primary" onclick="goNext(1)">Continue <span style="margin-left: 4px;">→</span></button>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 2: LICENSE ===== -->
+                <div class="step-panel" id="panel2">
+                    <div class="section-divider"><span>Driver's License</span></div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="field-group">
+                            <label class="field-label">License Number <span class="req">*</span></label>
+                            <input type="text" id="licenseNumber" placeholder="e.g. DL1234567" style="text-transform: uppercase;">
+                            <div class="error-msg" id="err-licenseNumber">Please enter your license number.</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Issuing State <span class="req">*</span></label>
+                            <select id="licenseState">
+                                <option value="">— Select State —</option>
+                                <option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option>
+                                <option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option>
+                                <option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option>
+                                <option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option>
+                                <option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option>
+                                <option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option>
+                                <option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option>
+                                <option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option>
+                                <option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option>
+                                <option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option>
+                                <option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option>
+                                <option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option>
+                                <option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option>
+                                <option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option>
+                                <option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option>
+                                <option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option>
+                                <option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
+                            </select>
+                            <div class="error-msg" id="err-licenseState">Please select a state.</div>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Expiration Date <span class="req">*</span></label>
+                        <input type="date" id="licenseExpiry" min="">
+                        <div class="error-msg" id="err-licenseExpiry">License must be valid (not expired).</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" style="display:flex; align-items: center;">
+                            Commercial Driver License (CDL) Class <span class="req">*</span>
+                            <span class="tooltip-trigger" data-tip="Select your highest CDL class. Class A allows combination vehicles, B for heavy straight trucks, C for smaller commercial vehicles.">?</span>
+                        </label>
+                        <div class="license-class-grid" id="lc-grid">
+                            <div class="lc-pill" onclick="selectLicenseClass('A', this)">
+                                <div class="lc-code">A</div>
+                                <div class="lc-desc">Combination Vehicles 26,001+ lbs</div>
+                            </div>
+                            <div class="lc-pill" onclick="selectLicenseClass('B', this)">
+                                <div class="lc-code">B</div>
+                                <div class="lc-desc">Heavy Straight Vehicles 26,001+ lbs</div>
+                            </div>
+                            <div class="lc-pill" onclick="selectLicenseClass('C', this)">
+                                <div class="lc-code">C</div>
+                                <div class="lc-desc">Small Vehicle / Passenger 16+</div>
+                            </div>
+                            <div class="lc-pill" onclick="selectLicenseClass('Non-CDL', this)">
+                                <div class="lc-code" style="font-size:13px;">Non-CDL</div>
+                                <div class="lc-desc">Standard driver's license</div>
+                            </div>
+                            <div class="lc-pill" onclick="selectLicenseClass('Learner', this)">
+                                <div class="lc-code" style="font-size:12px;">Learner</div>
+                                <div class="lc-desc">CDL Learner's Permit</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="licenseClass">
+                        <div class="error-msg" id="err-licenseClass">Please select your license class.</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">CDL Endorsements</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; background:#f3f4f6; padding:6px 12px; border-radius:6px; border: 1.5px solid #e5e7eb; transition: all 0.2s;" class="endorsement-label">
+                                <input type="checkbox" class="endorsement-cb" value="T" style="width:14px;height:14px;padding:0;"> T – Double/Triple Trailers
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; background:#f3f4f6; padding:6px 12px; border-radius:6px; border: 1.5px solid #e5e7eb;" class="endorsement-label">
+                                <input type="checkbox" class="endorsement-cb" value="H" style="width:14px;height:14px;padding:0;"> H – Hazmat
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; background:#f3f4f6; padding:6px 12px; border-radius:6px; border: 1.5px solid #e5e7eb;" class="endorsement-label">
+                                <input type="checkbox" class="endorsement-cb" value="N" style="width:14px;height:14px;padding:0;"> N – Tank Vehicle
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; background:#f3f4f6; padding:6px 12px; border-radius:6px; border: 1.5px solid #e5e7eb;" class="endorsement-label">
+                                <input type="checkbox" class="endorsement-cb" value="S" style="width:14px;height:14px;padding:0;"> S – School Bus
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Years of Towing Experience <span class="req">*</span></label>
+                        <select id="towingExperience">
+                            <option value="">Select experience level</option>
+                            <option value="0">Less than 1 year</option>
+                            <option value="1">1–2 years</option>
+                            <option value="3">3–5 years</option>
+                            <option value="6">6–10 years</option>
+                            <option value="11">10+ years</option>
+                        </select>
+                        <div class="error-msg" id="err-towingExperience">Please select your experience level.</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                        <button class="btn-secondary" onclick="goBack(2)">← Back</button>
+                        <button class="btn-primary" onclick="goNext(2)">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 3: VEHICLE ===== -->
+                <div class="step-panel" id="panel3">
+                    <div class="section-divider"><span>Tow Truck Details</span></div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;" class="field-group">
+                        <div>
+                            <label class="field-label">Year <span class="req">*</span></label>
+                            <input type="number" id="vehicleYear" placeholder="2020" min="1990" max="2026">
+                            <div class="error-msg" id="err-vehicleYear">Enter a valid year.</div>
+                        </div>
+                        <div>
+                            <label class="field-label">Make <span class="req">*</span></label>
+                            <input type="text" id="vehicleMake" placeholder="Ford">
+                            <div class="error-msg" id="err-vehicleMake">Enter vehicle make.</div>
+                        </div>
+                        <div>
+                            <label class="field-label">Model <span class="req">*</span></label>
+                            <input type="text" id="vehicleModel" placeholder="F-450">
+                            <div class="error-msg" id="err-vehicleModel">Enter vehicle model.</div>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Tow Truck Type <span class="req">*</span></label>
+                        <select id="vehicleType">
+                            <option value="">Select type</option>
+                            <option value="flatbed">Flatbed / Rollback</option>
+                            <option value="wheel_lift">Wheel Lift</option>
+                            <option value="hook_chain">Hook & Chain</option>
+                            <option value="integrated">Integrated (Repo Truck)</option>
+                            <option value="heavy_rotator">Heavy Rotator</option>
+                            <option value="medium_duty">Medium Duty (up to 10,000 lbs)</option>
+                            <option value="light_duty">Light Duty (up to 5,000 lbs)</option>
+                        </select>
+                        <div class="error-msg" id="err-vehicleType">Please select a truck type.</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="field-group">
+                            <label class="field-label">VIN Number <span class="req">*</span></label>
+                            <input type="text" id="vin" placeholder="1FTFW1EF0EFA00000" maxlength="17" style="text-transform: uppercase; font-family: monospace; letter-spacing: 0.05em;">
+                            <div class="error-msg" id="err-vin">VIN must be 17 characters.</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">License Plate <span class="req">*</span></label>
+                            <input type="text" id="licensePlate" placeholder="ABC-1234" style="text-transform: uppercase;">
+                            <div class="error-msg" id="err-licensePlate">Please enter your license plate.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="field-group">
+                            <label class="field-label">Plate State <span class="req">*</span></label>
+                            <select id="plateState">
+                                <option value="">— Select —</option>
+                                <option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option>
+                                <option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option>
+                                <option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option>
+                                <option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option>
+                                <option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option>
+                                <option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option>
+                                <option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option>
+                                <option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option>
+                                <option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option>
+                                <option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option>
+                                <option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option>
+                                <option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option>
+                                <option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option>
+                                <option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option>
+                                <option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option>
+                                <option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option>
+                                <option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
+                            </select>
+                            <div class="error-msg" id="err-plateState">Please select a state.</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Max Tow Capacity (lbs)</label>
+                            <input type="number" id="towCapacity" placeholder="e.g. 10000" min="1000" max="200000">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="check-item">
+                            <input type="checkbox" id="awdCheck" style="width:16px;height:16px;padding:0;">
+                            <span style="font-size: 13px; color: #4b5563;">Vehicle has AWD/4WD capability</span>
+                        </label>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Special Considerations / Notes</label>
+                        <textarea id="specialConsiderations" rows="3" placeholder="e.g. Equipped for luxury/exotic vehicles, low-clearance trucks, motorcycle transport, etc." style="resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                        <button class="btn-secondary" onclick="goBack(3)">← Back</button>
+                        <button class="btn-primary" onclick="goNext(3)">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 4: DOCUMENTS ===== -->
+                <div class="step-panel" id="panel4">
+                    <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #fbbf24; border-radius: 10px; padding: 12px 14px; margin-bottom: 24px; display: flex; gap: 10px; align-items: flex-start;">
+                        <svg width="18" height="18" fill="#d97706" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:1px;"><path d="M12 2L2 19h20L12 2zm0 3.5L19.5 18H4.5L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                        <div style="font-size: 13px; color: #92400e; line-height: 1.5;">
+                            <strong>Accepted formats:</strong> JPG, PNG, PDF — Max 10MB per file. Documents must be legible and unexpired. All uploads are encrypted and securely stored.
+                        </div>
+                    </div>
+
+                    <!-- Driver's License Photo -->
+                    <div class="field-group">
+                        <label class="field-label">Driver's License — Front & Back <span class="req">*</span></label>
+                        <div class="upload-zone" id="zone-license" ondragover="handleDrag(event, 'zone-license')" ondragleave="handleDragLeave('zone-license')" ondrop="handleDrop(event, 'dl_photo')">
+                            <input type="file" id="dl_photo" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileSelect(this, 'dl_photo')">
+                            <svg width="32" height="32" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 8px;"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 20M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <div style="font-size: 14px; font-weight: 500; color: #374151;">Click to upload or drag & drop</div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">JPG, PNG or PDF</div>
+                        </div>
+                        <div id="preview-dl_photo"></div>
+                        <div class="error-msg" id="err-dl_photo">Please upload your driver's license.</div>
+                    </div>
+
+                    <!-- Proof of Insurance -->
+                    <div class="field-group">
+                        <label class="field-label">
+                            Proof of Commercial Auto Insurance <span class="req">*</span>
+                            <span class="tooltip-trigger" data-tip="Must show policy number, coverage dates, and minimum $300K liability for commercial towing.">?</span>
+                        </label>
+                        <div class="upload-zone" id="zone-insurance" ondragover="handleDrag(event, 'zone-insurance')" ondragleave="handleDragLeave('zone-insurance')" ondrop="handleDrop(event, 'insurance_doc')">
+                            <input type="file" id="insurance_doc" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileSelect(this, 'insurance_doc')">
+                            <svg width="32" height="32" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 8px;"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <div style="font-size: 14px; font-weight: 500; color: #374151;">Upload Insurance Certificate</div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">Certificate of Insurance (ACORD 25 preferred)</div>
+                        </div>
+                        <div id="preview-insurance_doc"></div>
+                        <div class="error-msg" id="err-insurance_doc">Please upload proof of insurance.</div>
+                    </div>
+
+                    <!-- Vehicle Registration -->
+                    <div class="field-group">
+                        <label class="field-label">Vehicle Registration <span class="req">*</span></label>
+                        <div class="upload-zone" id="zone-registration" ondragover="handleDrag(event, 'zone-registration')" ondragleave="handleDragLeave('zone-registration')" ondrop="handleDrop(event, 'vehicle_reg')">
+                            <input type="file" id="vehicle_reg" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileSelect(this, 'vehicle_reg')">
+                            <svg width="32" height="32" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 8px;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            <div style="font-size: 14px; font-weight: 500; color: #374151;">Upload Registration Document</div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">Current registration card or renewal notice</div>
+                        </div>
+                        <div id="preview-vehicle_reg"></div>
+                        <div class="error-msg" id="err-vehicle_reg">Please upload your vehicle registration.</div>
+                    </div>
+
+                    <!-- Insurance Policy Details -->
+                    <div class="section-divider"><span>Insurance Policy Info</span></div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="field-group">
+                            <label class="field-label">Insurance Provider <span class="req">*</span></label>
+                            <input type="text" id="insuranceProvider" placeholder="e.g. Progressive, State Farm">
+                            <div class="error-msg" id="err-insuranceProvider">Please enter your insurance provider.</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Policy Number <span class="req">*</span></label>
+                            <input type="text" id="policyNumber" placeholder="e.g. POL-1234567">
+                            <div class="error-msg" id="err-policyNumber">Please enter your policy number.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="field-group">
+                            <label class="field-label">Policy Effective Date <span class="req">*</span></label>
+                            <input type="date" id="policyEffective">
+                            <div class="error-msg" id="err-policyEffective">Please enter effective date.</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Policy Expiration Date <span class="req">*</span></label>
+                            <input type="date" id="policyExpiry">
+                            <div class="error-msg" id="err-policyExpiry">Policy must not be expired.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                        <button class="btn-secondary" onclick="goBack(4)">← Back</button>
+                        <button class="btn-primary" onclick="goNext(4)">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 5: BANKING ===== -->
+                <div class="step-panel" id="panel5">
+                    <div class="secure-notice" style="margin-bottom: 24px;">
+                        <svg width="20" height="20" fill="#166534" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:1px;"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 600; color: #166534; margin-bottom: 2px;">Bank-Level Security</div>
+                            <div style="font-size: 12px; color: #16a34a; line-height: 1.5;">Your banking information is encrypted with AES-256 and stored via our PCI-DSS compliant payment partner. TowNow never stores raw account numbers.</div>
+                        </div>
+                    </div>
+
+                    <div class="section-divider"><span>Payout Account</span></div>
+
+                    <div class="field-group">
+                        <label class="field-label">Account Holder Name <span class="req">*</span></label>
+                        <input type="text" id="accountName" placeholder="Full name as it appears on account" autocomplete="name">
+                        <div class="error-msg" id="err-accountName">Please enter the account holder name.</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Account Type <span class="req">*</span></label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">
+                            <label onclick="selectAccountType('checking', this)" style="cursor:pointer;">
+                                <div class="lc-pill" id="acct-checking" style="padding: 12px;">
+                                    <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color: var(--green-dark);">Checking</div>
+                                    <div style="font-size:11px; color: var(--text-muted);">Most common for direct deposit</div>
+                                </div>
+                            </label>
+                            <label onclick="selectAccountType('savings', this)" style="cursor:pointer;">
+                                <div class="lc-pill" id="acct-savings" style="padding: 12px;">
+                                    <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color: var(--green-dark);">Savings</div>
+                                    <div style="font-size:11px; color: var(--text-muted);">Interest-bearing account</div>
+                                </div>
+                            </label>
+                        </div>
+                        <input type="hidden" id="accountType">
+                        <div class="error-msg" id="err-accountType">Please select an account type.</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" style="display:flex; align-items:center;">
+                            Routing Number <span class="req">*</span>
+                            <span class="tooltip-trigger" data-tip="9-digit routing number from the bottom-left of your check.">?</span>
+                        </label>
+                        <div class="masked-input-wrapper">
+                            <input type="password" id="routingNumber" placeholder="9-digit routing number" maxlength="9" pattern="[0-9]{9}" autocomplete="off" inputmode="numeric">
+                            <button type="button" class="reveal-btn" onclick="toggleMasked('routingNumber', this)">Show</button>
+                        </div>
+                        <div class="error-msg" id="err-routingNumber">Please enter a valid 9-digit routing number.</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Account Number <span class="req">*</span></label>
+                        <div class="masked-input-wrapper">
+                            <input type="password" id="accountNumber" placeholder="Account number" maxlength="17" autocomplete="off" inputmode="numeric">
+                            <button type="button" class="reveal-btn" onclick="toggleMasked('accountNumber', this)">Show</button>
+                        </div>
+                        <div class="error-msg" id="err-accountNumber">Please enter your account number.</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Confirm Account Number <span class="req">*</span></label>
+                        <div class="masked-input-wrapper">
+                            <input type="password" id="confirmAccountNumber" placeholder="Re-enter account number" maxlength="17" autocomplete="off" inputmode="numeric" onpaste="return false;">
+                            <button type="button" class="reveal-btn" onclick="toggleMasked('confirmAccountNumber', this)">Show</button>
+                        </div>
+                        <div class="error-msg" id="err-confirmAccountNumber">Account numbers do not match.</div>
+                    </div>
+
+                    <!-- Void Check Upload (optional) -->
+                    <div class="field-group">
+                        <label class="field-label" style="display:flex; align-items:center;">
+                            Void Check or Bank Letter
+                            <span style="font-size:11px; background:#f3f4f6; color: #6b7280; padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:400;">Optional but speeds approval</span>
+                        </label>
+                        <div class="upload-zone" id="zone-void" ondragover="handleDrag(event, 'zone-void')" ondragleave="handleDragLeave('zone-void')" ondrop="handleDrop(event, 'void_check')">
+                            <input type="file" id="void_check" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileSelect(this, 'void_check')">
+                            <svg width="28" height="28" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 6px;"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            <div style="font-size: 13px; font-weight: 500; color: #374151;">Void check or bank verification letter</div>
+                            <div style="font-size: 11px; color: #9ca3af; margin-top: 3px;">Speeds up account verification by 1–2 days</div>
+                        </div>
+                        <div id="preview-void_check"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                        <button class="btn-secondary" onclick="goBack(5)">← Back</button>
+                        <button class="btn-primary" onclick="goNext(5)">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 6: REVIEW ===== -->
+                <div class="step-panel" id="panel6">
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6;">Please review your information before submitting. Your application will be reviewed within 1–2 business days.</p>
+                    </div>
+
+                    <div class="review-block">
+                        <h4>Personal Information</h4>
+                        <div class="review-row"><span class="rv-label">Name</span><span class="rv-val" id="rv-name">—</span></div>
+                        <div class="review-row"><span class="rv-label">Email</span><span class="rv-val" id="rv-email">—</span></div>
+                        <div class="review-row"><span class="rv-label">Phone</span><span class="rv-val" id="rv-phone">—</span></div>
+                    </div>
+
+                    <div class="review-block">
+                        <h4>License Information</h4>
+                        <div class="review-row"><span class="rv-label">License #</span><span class="rv-val" id="rv-license">—</span></div>
+                        <div class="review-row"><span class="rv-label">State</span><span class="rv-val" id="rv-licstate">—</span></div>
+                        <div class="review-row"><span class="rv-label">Class</span><span class="rv-val" id="rv-class">—</span></div>
+                        <div class="review-row"><span class="rv-label">Expires</span><span class="rv-val" id="rv-expiry">—</span></div>
+                    </div>
+
+                    <div class="review-block">
+                        <h4>Vehicle</h4>
+                        <div class="review-row"><span class="rv-label">Vehicle</span><span class="rv-val" id="rv-vehicle">—</span></div>
+                        <div class="review-row"><span class="rv-label">Type</span><span class="rv-val" id="rv-vtype">—</span></div>
+                        <div class="review-row"><span class="rv-label">VIN</span><span class="rv-val" id="rv-vin" style="font-family:monospace; font-size:12px;">—</span></div>
+                    </div>
+
+                    <div class="review-block">
+                        <h4>Documents Uploaded</h4>
+                        <div class="review-row"><span class="rv-label">Driver's License</span><span class="rv-val" id="rv-dl">—</span></div>
+                        <div class="review-row"><span class="rv-label">Insurance</span><span class="rv-val" id="rv-ins">—</span></div>
+                        <div class="review-row"><span class="rv-label">Registration</span><span class="rv-val" id="rv-reg">—</span></div>
+                        <div class="review-row"><span class="rv-label">Insurance Provider</span><span class="rv-val" id="rv-insprov">—</span></div>
+                        <div class="review-row"><span class="rv-label">Policy #</span><span class="rv-val" id="rv-policy">—</span></div>
+                    </div>
+
+                    <div class="review-block">
+                        <h4>Banking</h4>
+                        <div class="review-row"><span class="rv-label">Account Name</span><span class="rv-val" id="rv-acctname">—</span></div>
+                        <div class="review-row"><span class="rv-label">Account Type</span><span class="rv-val" id="rv-accttype">—</span></div>
+                        <div class="review-row"><span class="rv-label">Routing #</span><span class="rv-val" id="rv-routing">—</span></div>
+                        <div class="review-row"><span class="rv-label">Account #</span><span class="rv-val" id="rv-acct">—</span></div>
+                    </div>
+
+                    <div class="field-group" style="margin-top: 16px;">
+                        <label class="check-item">
+                            <input type="checkbox" id="certifyCheck" style="width:18px;height:18px;padding:0;accent-color:var(--green-brand);">
+                            <span style="font-size: 13px; color: #4b5563; line-height: 1.6;">I certify that all information provided is true and accurate. I authorize TowNow to verify my credentials and run a background check as required for driver onboarding.</span>
+                        </label>
+                        <div class="error-msg" id="err-certify">You must certify the information before submitting.</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px; gap: 12px;">
+                        <button class="btn-secondary" onclick="goBack(6)">← Back</button>
+                        <button class="btn-primary" onclick="submitApplication()" id="submitBtn" style="flex: 1; max-width: 240px;">
+                            Submit Application
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===== SUCCESS ===== -->
+                <div class="step-panel" id="panel7">
+                    <div class="success-screen">
+                        <div class="success-icon">
+                            <svg width="40" height="40" fill="none" stroke="#16a34a" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <h3 style="font-family:'Syne',sans-serif; font-size:24px; font-weight:800; color: var(--green-dark); margin-bottom:12px;">Application Submitted!</h3>
+                        <p style="font-size: 15px; color: var(--text-muted); max-width: 380px; margin: 0 auto 8px; line-height: 1.6;">
+                            We've received your driver application. Our team will review it within <strong style="color: var(--green-brand);">1–2 business days</strong>.
+                        </p>
+                        <p style="font-size: 13px; color: #9ca3af; margin-bottom: 32px;">A confirmation email has been sent to <strong id="conf-email" style="color: #374151;"></strong></p>
+                        <div style="background: #f0fdf4; border-radius: 12px; padding: 20px; text-align: left; margin-bottom: 28px;">
+                            <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.05em; text-transform:uppercase; color: var(--green-brand); margin-bottom: 12px;">What happens next</div>
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:#374151;">
+                                    <span style="background: var(--green-brand); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; flex-shrink:0;">1</span>
+                                    Application review & document verification
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:#374151;">
+                                    <span style="background: var(--green-brand); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; flex-shrink:0;">2</span>
+                                    Background & MVR (Motor Vehicle Record) check
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:#374151;">
+                                    <span style="background: var(--green-brand); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; flex-shrink:0;">3</span>
+                                    Bank account verification via micro-deposit
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:#374151;">
+                                    <span style="background: var(--green-brand); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; flex-shrink:0;">4</span>
+                                    Approval & dashboard activation — start earning!
+                                </div>
+                            </div>
+                        </div>
+                        <a href="driver-dashboard.html" class="btn-primary" style="display:inline-block; text-decoration:none;">Go to Dashboard</a>
+                    </div>
+                </div>
+
+            </div><!-- /form body -->
+        </div><!-- /card -->
+
+        <div style="text-align:center; margin-top: 20px;">
+            <span style="color: rgba(255,255,255,0.4); font-size: 12px;">Already have an account? </span>
+            <a href="driver-login.html" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600; text-decoration: none;">Sign in →</a>
+        </div>
+
+    </div><!-- /outer wrapper -->
+
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            300: '#a5b4fc',
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            800: '#3730a3',
-                            900: '#312e81',
-                        }
-                    }
+        // ──────────────── STATE ────────────────
+        let currentStep = 1;
+        const totalSteps = 6;
+        const uploadedFiles = {};
+        let licenseClass = '';
+        let accountType = '';
+
+        const stepTitles = {
+            1: 'Personal Information',
+            2: 'License Information',
+            3: 'Vehicle Details',
+            4: 'Document Upload',
+            5: 'Banking & Payout',
+            6: 'Review & Submit'
+        };
+
+        // ──────────────── NAVIGATION ────────────────
+        function goNext(from) {
+            if (!validateStep(from)) return;
+            navigateTo(from + 1, 'forward');
+        }
+
+        function goBack(from) {
+            navigateTo(from - 1, 'back');
+        }
+
+        function navigateTo(step, direction) {
+            const oldPanel = document.getElementById('panel' + currentStep);
+            const newPanel = document.getElementById('panel' + step);
+
+            oldPanel.classList.remove('active');
+            newPanel.classList.remove('back-anim');
+            if (direction === 'back') newPanel.classList.add('back-anim');
+            newPanel.classList.add('active');
+
+            currentStep = step;
+            updateProgress();
+
+            if (step === 6) buildReview();
+
+            // Scroll to top of card
+            document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function updateProgress() {
+            document.getElementById('stepTitle').textContent = stepTitles[currentStep] || 'Complete';
+
+            for (let i = 1; i <= 6; i++) {
+                const dot = document.getElementById('dot' + i);
+                dot.classList.remove('active', 'completed');
+                if (i < currentStep) dot.classList.add('completed');
+                else if (i === currentStep) dot.classList.add('active');
+
+                if (i <= 5) {
+                    const conn = document.getElementById('conn' + i);
+                    conn.classList.toggle('completed', i < currentStep);
                 }
             }
         }
-    </script>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700">
-    <div class="min-h-screen flex items-center justify-center px-4 py-12">
-        <div class="max-w-md w-full">
-            <!-- Logo -->
-            <div class="text-center mb-8">
-                <a href="index.html" class="inline-flex items-center space-x-2 text-white">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    <span class="text-3xl font-bold">TowNow</span>
-                </a>
-            </div>
 
-            <!-- Registration Form -->
-            <div class="bg-white rounded-lg shadow-xl p-8">
-                <div class="text-center mb-6">
-                    <h2 class="text-3xl font-bold text-gray-900">Become a Driver</h2>
-                    <p class="text-gray-600 mt-2">Start earning with TowNow</p>
-                </div>
+        // ──────────────── VALIDATION ────────────────
+        function showError(id, show) {
+            const el = document.getElementById('err-' + id);
+            if (el) el.classList.toggle('visible', show);
+            const input = document.getElementById(id);
+            if (input) input.classList.toggle('error', show);
+        }
 
-                <form id="registerForm" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                            <input type="text" id="firstName" name="firstName" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="John">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                            <input type="text" id="lastName" name="lastName" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="Doe">
-                        </div>
-                    </div>
+        function clearErrors(ids) {
+            ids.forEach(id => showError(id, false));
+        }
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                        <input type="email" id="email" name="email" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="john@example.com">
-                    </div>
+        function validateStep(step) {
+            let valid = true;
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="(555) 123-4567">
-                    </div>
+            if (step === 1) {
+                const fn = document.getElementById('firstName').value.trim();
+                const ln = document.getElementById('lastName').value.trim();
+                const em = document.getElementById('email').value.trim();
+                const ph = document.getElementById('phone').value.replace(/\D/g,'');
+                const pw = document.getElementById('password').value;
+                const cpw = document.getElementById('confirmPassword').value;
+                const terms = document.getElementById('termsCheck').checked;
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">License Number</label>
-                        <input type="text" id="licenseNumber" name="licenseNumber" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="DL123456">
-                    </div>
+                if (!fn) { showError('firstName', true); valid = false; } else showError('firstName', false);
+                if (!ln) { showError('lastName', true); valid = false; } else showError('lastName', false);
+                if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { showError('email', true); valid = false; } else showError('email', false);
+                if (ph.length !== 10) { showError('phone', true); valid = false; } else showError('phone', false);
+                if (pw.length < 8) { showError('password', true); valid = false; } else showError('password', false);
+                if (pw !== cpw) { showError('confirmPassword', true); valid = false; } else showError('confirmPassword', false);
+                if (!terms) { showError('terms', true); valid = false; } else showError('terms', false);
+            }
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Vehicle Type</label>
-                        <select id="vehicleType" name="vehicleType" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                            <option value="">Select vehicle type</option>
-                            <option value="light">Light Duty (up to 5,000 lbs)</option>
-                            <option value="medium">Medium Duty (up to 10,000 lbs)</option>
-                            <option value="heavy">Heavy Duty (over 10,000 lbs)</option>
-                        </select>
-                    </div>
+            if (step === 2) {
+                const ln = document.getElementById('licenseNumber').value.trim();
+                const ls = document.getElementById('licenseState').value;
+                const le = document.getElementById('licenseExpiry').value;
+                const lc = document.getElementById('licenseClass').value;
+                const te = document.getElementById('towingExperience').value;
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <input type="password" id="password" name="password"  required maxlength="128"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="••••••••">
-                    </div>
+                if (!ln) { showError('licenseNumber', true); valid = false; } else showError('licenseNumber', false);
+                if (!ls) { showError('licenseState', true); valid = false; } else showError('licenseState', false);
+                if (!le || new Date(le) < new Date()) { showError('licenseExpiry', true); valid = false; } else showError('licenseExpiry', false);
+                if (!lc) { showError('licenseClass', true); valid = false; } else showError('licenseClass', false);
+                if (!te) { showError('towingExperience', true); valid = false; } else showError('towingExperience', false);
+            }
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword"  required maxlength="128"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="••••••••">
-                    </div>
+            if (step === 3) {
+                const vy = document.getElementById('vehicleYear').value;
+                const vm = document.getElementById('vehicleMake').value.trim();
+                const vmod = document.getElementById('vehicleModel').value.trim();
+                const vt = document.getElementById('vehicleType').value;
+                const vin = document.getElementById('vin').value.trim();
+                const lp = document.getElementById('licensePlate').value.trim();
+                const ps = document.getElementById('plateState').value;
 
-                    <button type="submit" id="submitBtn"
-                        class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-                        Apply to Drive
-                    </button>
-                </form>
+                if (!vy || vy < 1990 || vy > 2026) { showError('vehicleYear', true); valid = false; } else showError('vehicleYear', false);
+                if (!vm) { showError('vehicleMake', true); valid = false; } else showError('vehicleMake', false);
+                if (!vmod) { showError('vehicleModel', true); valid = false; } else showError('vehicleModel', false);
+                if (!vt) { showError('vehicleType', true); valid = false; } else showError('vehicleType', false);
+                if (vin.length !== 17) { showError('vin', true); valid = false; } else showError('vin', false);
+                if (!lp) { showError('licensePlate', true); valid = false; } else showError('licensePlate', false);
+                if (!ps) { showError('plateState', true); valid = false; } else showError('plateState', false);
+            }
 
-                <p class="text-center text-gray-600 text-sm mt-6">
-                    Already have an account?
-                    <a href="driver-login.html" class="text-green-600 font-semibold hover:text-green-700">Sign in</a>
-                </p>
+            if (step === 4) {
+                if (!uploadedFiles['dl_photo']) { showError('dl_photo', true); valid = false; } else showError('dl_photo', false);
+                if (!uploadedFiles['insurance_doc']) { showError('insurance_doc', true); valid = false; } else showError('insurance_doc', false);
+                if (!uploadedFiles['vehicle_reg']) { showError('vehicle_reg', true); valid = false; } else showError('vehicle_reg', false);
 
-                <div class="mt-6 text-center">
-                    <a href="index.html" class="text-gray-600 text-sm hover:text-gray-900">← Back to home</a>
-                </div>
-            </div>
-        </div>
-    </div>
+                const ip = document.getElementById('insuranceProvider').value.trim();
+                const pn = document.getElementById('policyNumber').value.trim();
+                const pe = document.getElementById('policyEffective').value;
+                const px = document.getElementById('policyExpiry').value;
 
-    <script>
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                alert('Passwords do not match!');
+                if (!ip) { showError('insuranceProvider', true); valid = false; } else showError('insuranceProvider', false);
+                if (!pn) { showError('policyNumber', true); valid = false; } else showError('policyNumber', false);
+                if (!pe) { showError('policyEffective', true); valid = false; } else showError('policyEffective', false);
+                if (!px || new Date(px) < new Date()) { showError('policyExpiry', true); valid = false; } else showError('policyExpiry', false);
+            }
+
+            if (step === 5) {
+                const an = document.getElementById('accountName').value.trim();
+                const at = document.getElementById('accountType').value;
+                const rn = document.getElementById('routingNumber').value.replace(/\D/g,'');
+                const acct = document.getElementById('accountNumber').value.replace(/\D/g,'');
+                const cacct = document.getElementById('confirmAccountNumber').value.replace(/\D/g,'');
+
+                if (!an) { showError('accountName', true); valid = false; } else showError('accountName', false);
+                if (!at) { showError('accountType', true); valid = false; } else showError('accountType', false);
+                if (rn.length !== 9) { showError('routingNumber', true); valid = false; } else showError('routingNumber', false);
+                if (acct.length < 4) { showError('accountNumber', true); valid = false; } else showError('accountNumber', false);
+                if (acct !== cacct) { showError('confirmAccountNumber', true); valid = false; } else showError('confirmAccountNumber', false);
+            }
+
+            return valid;
+        }
+
+        // ──────────────── UI HELPERS ────────────────
+        function togglePw(id, btn) {
+            const input = document.getElementById(id);
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            btn.innerHTML = showing
+                ? `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+                : `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+        }
+
+        function toggleMasked(id, btn) {
+            const input = document.getElementById(id);
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            btn.textContent = showing ? 'Show' : 'Hide';
+        }
+
+        function selectLicenseClass(cls, el) {
+            document.querySelectorAll('.lc-pill').forEach(p => {
+                if (p.parentElement?.id === 'lc-grid' || p.closest('#lc-grid')) {
+                    // only remove from license class grid
+                }
+            });
+            // remove from all lc-grid pills
+            el.closest('.license-class-grid').querySelectorAll('.lc-pill').forEach(p => p.classList.remove('selected'));
+            el.classList.add('selected');
+            licenseClass = cls;
+            document.getElementById('licenseClass').value = cls;
+            showError('licenseClass', false);
+        }
+
+        function selectAccountType(type, el) {
+            ['acct-checking', 'acct-savings'].forEach(id => document.getElementById(id).classList.remove('selected'));
+            document.getElementById('acct-' + type).classList.add('selected');
+            accountType = type;
+            document.getElementById('accountType').value = type;
+            showError('accountType', false);
+        }
+
+        // ──────────────── PHONE FORMAT ────────────────
+        document.getElementById('phone').addEventListener('input', function() {
+            let v = this.value.replace(/\D/g,'').substring(0,10);
+            if (v.length >= 6) v = '(' + v.substring(0,3) + ') ' + v.substring(3,6) + '-' + v.substring(6);
+            else if (v.length >= 3) v = '(' + v.substring(0,3) + ') ' + v.substring(3);
+            this.value = v;
+        });
+
+        // ──────────────── PASSWORD STRENGTH ────────────────
+        document.getElementById('password').addEventListener('input', function() {
+            const pw = this.value;
+            const bars = document.getElementById('strength-bars');
+            const label = document.getElementById('strength-label');
+
+            if (pw.length === 0) { bars.style.display = 'none'; label.style.display = 'none'; return; }
+            bars.style.display = 'flex'; label.style.display = 'block';
+
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (pw.length >= 12) score++;
+            if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+            const strength = Math.min(4, Math.round(score * 0.8));
+            const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+            const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('sb' + i).style.background = i <= strength ? colors[strength] : '#e5e7eb';
+            }
+            label.textContent = labels[strength];
+            label.style.color = colors[strength];
+        });
+
+        // ──────────────── FILE UPLOAD ────────────────
+        const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+        function handleFileSelect(input, fieldId) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (file.size > MAX_SIZE) {
+                alert('File is too large. Maximum size is 10MB.');
+                input.value = '';
                 return;
             }
-            
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting Application...';
-            
+
+            const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!allowed.includes(file.type)) {
+                alert('Invalid file type. Please upload JPG, PNG, or PDF.');
+                input.value = '';
+                return;
+            }
+
+            uploadedFiles[fieldId] = file;
+            renderPreview(fieldId, file);
+            showError(fieldId, false);
+        }
+
+        function renderPreview(fieldId, file) {
+            const container = document.getElementById('preview-' + fieldId);
+            if (!container) return;
+            const isImg = file.type.startsWith('image/');
+            const icon = isImg ? '🖼️' : '📄';
+            container.innerHTML = `
+                <div class="upload-preview">
+                    <span style="font-size:18px;">${icon}</span>
+                    <span class="file-name">${file.name}</span>
+                    <span style="font-size:11px; color:#6b7280;">${(file.size/1024).toFixed(0)} KB</span>
+                    <button class="remove-btn" onclick="removeFile('${fieldId}')">✕</button>
+                </div>`;
+        }
+
+        function removeFile(fieldId) {
+            delete uploadedFiles[fieldId];
+            document.getElementById('preview-' + fieldId).innerHTML = '';
+            document.getElementById(fieldId).value = '';
+        }
+
+        function handleDrag(e, zoneId) {
+            e.preventDefault();
+            document.getElementById(zoneId).classList.add('dragover');
+        }
+
+        function handleDragLeave(zoneId) {
+            document.getElementById(zoneId).classList.remove('dragover');
+        }
+
+        function handleDrop(e, fieldId) {
+            e.preventDefault();
+            const zoneId = 'zone-' + fieldId.replace('_', '-').replace('_doc','').replace('_photo','');
+            // find corresponding zone
+            document.querySelectorAll('.upload-zone').forEach(z => z.classList.remove('dragover'));
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const fakeInput = { files: [file], value: '' };
+                handleFileSelect(fakeInput, fieldId);
+            }
+        }
+
+        // ──────────────── REVIEW BUILD ────────────────
+        function buildReview() {
+            document.getElementById('rv-name').textContent = (document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value).trim() || '—';
+            document.getElementById('rv-email').textContent = document.getElementById('email').value || '—';
+            document.getElementById('rv-phone').textContent = document.getElementById('phone').value || '—';
+
+            document.getElementById('rv-license').textContent = document.getElementById('licenseNumber').value.toUpperCase() || '—';
+            document.getElementById('rv-licstate').textContent = document.getElementById('licenseState').value || '—';
+            document.getElementById('rv-class').textContent = document.getElementById('licenseClass').value || '—';
+            document.getElementById('rv-expiry').textContent = document.getElementById('licenseExpiry').value || '—';
+
+            const yr = document.getElementById('vehicleYear').value;
+            const mk = document.getElementById('vehicleMake').value;
+            const mo = document.getElementById('vehicleModel').value;
+            document.getElementById('rv-vehicle').textContent = [yr,mk,mo].filter(Boolean).join(' ') || '—';
+            document.getElementById('rv-vtype').textContent = document.getElementById('vehicleType').options[document.getElementById('vehicleType').selectedIndex]?.text || '—';
+            document.getElementById('rv-vin').textContent = document.getElementById('vin').value.toUpperCase() || '—';
+
+            document.getElementById('rv-dl').textContent = uploadedFiles['dl_photo'] ? '✅ ' + uploadedFiles['dl_photo'].name : '❌ Not uploaded';
+            document.getElementById('rv-ins').textContent = uploadedFiles['insurance_doc'] ? '✅ ' + uploadedFiles['insurance_doc'].name : '❌ Not uploaded';
+            document.getElementById('rv-reg').textContent = uploadedFiles['vehicle_reg'] ? '✅ ' + uploadedFiles['vehicle_reg'].name : '❌ Not uploaded';
+            document.getElementById('rv-insprov').textContent = document.getElementById('insuranceProvider').value || '—';
+            document.getElementById('rv-policy').textContent = document.getElementById('policyNumber').value || '—';
+
+            document.getElementById('rv-acctname').textContent = document.getElementById('accountName').value || '—';
+            document.getElementById('rv-accttype').textContent = document.getElementById('accountType').value ? (document.getElementById('accountType').value.charAt(0).toUpperCase() + document.getElementById('accountType').value.slice(1)) : '—';
+            const rn = document.getElementById('routingNumber').value;
+            document.getElementById('rv-routing').textContent = rn ? '•••••' + rn.slice(-4) : '—';
+            const acn = document.getElementById('accountNumber').value;
+            document.getElementById('rv-acct').textContent = acn ? '••••••' + acn.slice(-4) : '—';
+        }
+
+        // ──────────────── SUBMIT ────────────────
+        async function submitApplication() {
+            if (!document.getElementById('certifyCheck').checked) {
+                showError('certify', true);
+                return;
+            }
+            showError('certify', false);
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting…';
+
+            const endorsements = Array.from(document.querySelectorAll('.endorsement-cb:checked')).map(cb => cb.value);
+
             const userData = {
-                first_name: document.getElementById('firstName').value,
-                last_name: document.getElementById('lastName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                password: password,
+                first_name: document.getElementById('firstName').value.trim(),
+                last_name: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.replace(/\D/g,''),
+                password: document.getElementById('password').value,
                 role: 'driver'
             };
-            
+
+            const driverData = {
+                license_number: document.getElementById('licenseNumber').value.trim().toUpperCase(),
+                license_state: document.getElementById('licenseState').value,
+                license_class: document.getElementById('licenseClass').value,
+                license_expiry: document.getElementById('licenseExpiry').value,
+                cdl_endorsements: endorsements,
+                towing_experience_years: document.getElementById('towingExperience').value,
+                vehicle_year: document.getElementById('vehicleYear').value,
+                vehicle_make: document.getElementById('vehicleMake').value.trim(),
+                vehicle_model: document.getElementById('vehicleModel').value.trim(),
+                vehicle_type: document.getElementById('vehicleType').value,
+                vin: document.getElementById('vin').value.trim().toUpperCase(),
+                license_plate: document.getElementById('licensePlate').value.trim().toUpperCase(),
+                plate_state: document.getElementById('plateState').value,
+                tow_capacity_lbs: document.getElementById('towCapacity').value || null,
+                awd_capable: document.getElementById('awdCheck').checked,
+                special_considerations: document.getElementById('specialConsiderations').value.trim(),
+                insurance_provider: document.getElementById('insuranceProvider').value.trim(),
+                policy_number: document.getElementById('policyNumber').value.trim(),
+                policy_effective: document.getElementById('policyEffective').value,
+                policy_expiry: document.getElementById('policyExpiry').value,
+                banking: {
+                    account_name: document.getElementById('accountName').value.trim(),
+                    account_type: document.getElementById('accountType').value,
+                    routing_number: document.getElementById('routingNumber').value,
+                    account_number: document.getElementById('accountNumber').value
+                }
+            };
+
             try {
-                // Step 1: Register as user
-                const registerResponse = await fetch('/api/v1/auth/register', {
+                // Step 1: Register
+                const regRes = await fetch('/api/v1/auth/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 });
-                
-                const registerData = await registerResponse.json();
-                
-                if (registerResponse.ok) {
-                    // Store token
-                    localStorage.setItem('auth_token', registerData.access_token);
-                    
-                    // Step 2: Apply as driver
-                    const driverData = {
-                        license_number: document.getElementById('licenseNumber').value,
-                        license_state: 'CA',
-                        license_expiry: '2030-12-31',
-                        company_name: null,
-                        company_ein: null
-                    };
-                    
-                    const driverResponse = await fetch('/api/v1/drivers/apply', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${registerData.access_token}`
-                        },
-                        body: JSON.stringify(driverData)
-                    });
-                    
-                    if (driverResponse.ok) {
-                        alert('Driver application submitted successfully!');
-                        window.location.href = 'driver-dashboard.html';
-                    } else {
-                        const driverError = await driverResponse.json();
-                        alert(driverError.detail || 'Error submitting driver application.');
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Apply to Drive';
+
+                const regData = await regRes.json();
+                if (!regRes.ok) throw new Error(regData.detail || 'Registration failed');
+
+                const token = regData.access_token;
+                localStorage.setItem('auth_token', token);
+
+                // Step 2: Driver apply
+                const driverRes = await fetch('/api/v1/drivers/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(driverData)
+                });
+
+                const driverDataRes = await driverRes.json();
+                if (!driverRes.ok) throw new Error(driverDataRes.detail || 'Driver application failed');
+
+                const driverId = driverDataRes.id || driverDataRes.driver_id;
+
+                // Step 3: Upload documents
+                const docMap = { dl_photo: 'dl_photo', insurance_doc: 'insurance', vehicle_reg: 'vehicle_registration', void_check: 'void_check' };
+                for (const [key, docType] of Object.entries(docMap)) {
+                    if (uploadedFiles[key]) {
+                        const fd = new FormData();
+                        fd.append('file', uploadedFiles[key]);
+                        fd.append('document_type', docType);
+                        await fetch(`/api/v1/drivers/${driverId}/documents`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: fd
+                        });
                     }
-                } else {
-                    alert(registerData.detail || 'Error creating account. Please try again.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Apply to Drive';
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Network error. Please check your connection and try again.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Apply to Drive';
+
+                // Step 4: Banking (separate secure endpoint)
+                await fetch(`/api/v1/drivers/${driverId}/banking`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(driverData.banking)
+                });
+
+                // Success
+                document.getElementById('conf-email').textContent = userData.email;
+                navigateTo(7, 'forward');
+
+            } catch (err) {
+                console.error('Submit error:', err);
+                btn.disabled = false;
+                btn.textContent = 'Submit Application';
+                // Show inline error instead of alert
+                const errDiv = document.createElement('div');
+                errDiv.style.cssText = 'background:#fee2e2; border:1px solid #fca5a5; border-radius:8px; padding:12px 14px; font-size:13px; color:#b91c1c; margin-bottom:16px;';
+                errDiv.textContent = '⚠ ' + err.message;
+                const panel = document.getElementById('panel6');
+                const existing = panel.querySelector('.submit-err');
+                if (existing) existing.remove();
+                errDiv.classList.add('submit-err');
+                panel.querySelector('.review-block').before(errDiv);
             }
-        });
+        }
+
+        // ──────────────── INIT ────────────────
+        // Set min date for license expiry (today)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('licenseExpiry').min = today;
+        document.getElementById('policyExpiry').min = today;
+
+        // Focus first field
+        document.getElementById('firstName').focus();
     </script>
 </body>
 </html>
