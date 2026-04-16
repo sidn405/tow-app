@@ -1642,6 +1642,8 @@
                 localStorage.setItem('auth_token', token);
 
                 // Step 2: Driver apply
+                const { banking, ...applyPayload } = driverData;
+
                 const driverRes = await fetch('/api/v1/drivers/apply', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -1672,7 +1674,7 @@
                 await fetch(`/api/v1/drivers/${driverId}/banking`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(applyPayload)
+                    body: JSON.stringify(banking)
                 });
 
                 // Success
