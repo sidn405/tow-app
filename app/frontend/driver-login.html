@@ -116,6 +116,7 @@
                 
                 if (response.ok) {
                     localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
                     localStorage.setItem('user_type', 'driver');
                     window.location.href = 'driver-dashboard.html';
                 } else {
