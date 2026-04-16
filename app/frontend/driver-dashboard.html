@@ -158,6 +158,8 @@
             window.location.href = 'driver-login.html';
         }
 
+        let isOnline = false;
+
         // Auto-refresh token before it expires
         async function refreshAccessToken() {
             if (!refreshToken) {
