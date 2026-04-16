@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Integer, Date, ForeignKey, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Integer, Text, Date, ForeignKey, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
@@ -19,7 +19,6 @@ class BackgroundCheckStatus(str, enum.Enum):
 
 class Driver(Base):
     __tablename__ = "drivers"
-
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     
@@ -28,11 +27,30 @@ class Driver(Base):
     license_state = Column(String(2))
     license_expiry = Column(Date)
     license_photo_url = Column(String)
+    license_class = Column(String(20))                    # NEW
+    cdl_endorsements = Column(ARRAY(String), default=[])  # NEW
+    towing_experience_years = Column(String(10))          # NEW
+    
+    # Vehicle                                             
+    vehicle_year = Column(Integer)                        # NEW
+    vehicle_make = Column(String(100))                    # NEW
+    vehicle_model = Column(String(100))                   # NEW
+    vehicle_type = Column(String(50))                     # NEW
+    vin = Column(String(17))                              # NEW
+    license_plate = Column(String(20))                    # NEW
+    plate_state = Column(String(2))                       # NEW
+    tow_capacity_lbs = Column(Integer)                    # NEW
+    awd_capable = Column(Boolean, default=False)          # NEW
+    special_considerations = Column(Text)                 # NEW
     
     # Insurance
     insurance_policy_number = Column(String(100))
     insurance_expiry = Column(Date)
     insurance_photo_url = Column(String)
+    insurance_provider = Column(String(100))              # NEW
+    policy_number = Column(String(100))                   # NEW
+    policy_effective = Column(Date)                       # NEW
+    policy_expiry = Column(Date)                          # NEW
     
     # Background check
     background_check_status = Column(SQLEnum(BackgroundCheckStatus), default=BackgroundCheckStatus.PENDING)
@@ -43,7 +61,7 @@ class Driver(Base):
     company_ein = Column(String(20))
     
     # Stripe Connect
-    bank_account_id = Column(String(255))  # Stripe Connect account ID
+    bank_account_id = Column(String(255))
     commission_rate = Column(Numeric(5, 2), default=15.00)
     
     # Performance metrics
