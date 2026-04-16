@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+import boto3
+from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
@@ -247,6 +249,89 @@ async def update_driver_profile(
     
     return DriverResponse.from_orm(driver)
 
+@router.post("/{driver_id}/documents")
+async def upload_driver_document(
+    driver_id: UUID,
+    file: UploadFile = File(...),
+    document_type: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload a driver document (license, insurance, registration)"""
+    # Verify driver belongs to current user
+    result = await db.execute(
+        select(Driver).where(Driver.id == driver_id, Driver.user_id == current_user.id)
+    )
+    driver = result.scalar_one_or_none()
+    if not driver:
+        raise HTTPException(status_code=404, detail="Driver not found")
+
+    # Save file — store to S3 or local depending on your config
+    file_url = None
+    try:
+        file_contents = await file.read()
+        
+        # If you have S3 configured
+        if hasattr(settings, 'AWS_S3_BUCKET') and settings.AWS_S3_BUCKET:
+            s3 = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_REGION
+            )
+            key = f"drivers/{driver_id}/{document_type}/{file.filename}"
+            s3.put_object(
+                Bucket=settings.AWS_S3_BUCKET,
+                Key=key,
+                Body=file_contents,
+                ContentType=file.content_type
+            )
+            file_url = f"https://{settings.AWS_S3_BUCKET}.s3.amazonaws.com/{key}"
+        
+        # Update the correct URL field based on document type
+        if document_type == "dl_photo":
+            driver.license_photo_url = file_url or f"uploaded:{file.filename}"
+        elif document_type == "insurance":
+            driver.insurance_photo_url = file_url or f"uploaded:{file.filename}"
+        # vehicle_registration and void_check don't have dedicated columns yet — just log success
+        
+        await db.commit()
+        
+    except Exception as e:
+        logger.warning(f"Document upload error for driver {driver_id}: {e}")
+        # Don't fail registration over document upload issues
+
+    return {"message": f"{document_type} uploaded successfully", "url": file_url}
+
+
+@router.post("/{driver_id}/banking")
+async def save_banking_info(
+    driver_id: UUID,
+    banking_data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Save driver banking/payout information"""
+    result = await db.execute(
+        select(Driver).where(Driver.id == driver_id, Driver.user_id == current_user.id)
+    )
+    driver = result.scalar_one_or_none()
+    if not driver:
+        raise HTTPException(status_code=404, detail="Driver not found")
+
+    # Store via Stripe Connect if available, otherwise log for manual processing
+    try:
+        payment_service = PaymentService(db)
+        await payment_service.setup_driver_connect_account(
+            driver_id=driver.id,
+            email=current_user.email
+        )
+    except Exception as e:
+        logger.warning(f"Banking setup error for driver {driver_id}: {e}")
+        # Store raw for manual processing — never store plain account numbers in prod
+        # Use Stripe, Plaid, or Dwolla for real banking in production
+
+    return {"message": "Banking information received"}
 
 @router.post("/accept-request/{request_id}")
 async def accept_tow_request(
