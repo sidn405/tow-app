@@ -3,799 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TowNow Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <title>Admin Console - TowNow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg: #080f0b;
-            --surface: #0f1a13;
-            --surface2: #162019;
-            --surface3: #1c2a1f;
-            --border: #1f3026;
-            --border2: #2a3d30;
-            --green: #22c55e;
-            --green-dim: #16a34a;
+            --green-brand: #16a34a;
+            --green-bright: #22c55e;
             --green-dark: #0d3321;
-            --green-glow: rgba(34,197,94,0.12);
-            --amber: #f59e0b;
-            --red: #ef4444;
-            --blue: #3b82f6;
-            --text: #e8f5ec;
-            --text-mid: #8aab92;
-            --text-dim: #4a6650;
-            --mono: 'JetBrains Mono', monospace;
+            --green-mid: #155c3a;
+            --green-light: #dcfce7;
         }
+        * { box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f2; }
+        h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            overflow-x: hidden;
-        }
-
-        /* ── SIDEBAR ── */
         .sidebar {
-            width: 220px;
-            min-height: 100vh;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0; left: 0;
-            z-index: 100;
-        }
-
-        .sidebar-logo {
-            padding: 24px 20px 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .sidebar-logo .wordmark {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 20px;
-            color: var(--text);
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sidebar-logo .icon {
-            width: 30px; height: 30px;
-            background: linear-gradient(135deg, var(--green), var(--green-dim));
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .sidebar-logo .admin-badge {
-            font-size: 9px;
-            font-family: var(--mono);
-            font-weight: 500;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--green);
+            width: 240px; min-height: 100vh;
             background: var(--green-dark);
-            border: 1px solid var(--green-dim);
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 4px;
-            display: inline-block;
+            position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 100;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.18);
         }
-
-        .nav-section {
-            padding: 16px 12px 8px;
-        }
-
-        .nav-label {
-            font-size: 9px;
-            font-family: var(--mono);
-            font-weight: 500;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            padding: 0 8px;
-            margin-bottom: 6px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.18s;
-            color: var(--text-mid);
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            position: relative;
-        }
-
-        .nav-item:hover { background: var(--surface2); color: var(--text); }
-
-        .nav-item.active {
-            background: var(--green-glow);
-            color: var(--green);
-            border: 1px solid rgba(34,197,94,0.15);
-        }
-
-        .nav-item svg { flex-shrink: 0; }
-
-        .nav-badge {
-            margin-left: auto;
-            background: var(--red);
-            color: white;
-            font-size: 10px;
-            font-weight: 700;
-            font-family: var(--mono);
-            padding: 1px 6px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-        }
-
-        .nav-badge.amber { background: var(--amber); color: #000; }
-        .nav-badge.green { background: var(--green); color: #000; }
-
-        .sidebar-footer {
-            margin-top: auto;
-            padding: 16px 12px;
-            border-top: 1px solid var(--border);
-        }
-
-        .admin-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            border-radius: 8px;
-            background: var(--surface2);
-        }
-
-        .admin-avatar {
-            width: 32px; height: 32px;
-            background: linear-gradient(135deg, var(--green), var(--green-dim));
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 13px;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .admin-info .name { font-size: 13px; font-weight: 600; color: var(--text); }
-        .admin-info .role { font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
-
-        /* ── MAIN ── */
-        .main {
-            margin-left: 220px;
-            flex: 1;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .topbar {
-            height: 56px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 28px;
-            gap: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-
-        .topbar h1 {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 16px;
-            letter-spacing: -0.01em;
-            color: var(--text);
-            flex: 1;
-        }
-
-        .topbar-actions { display: flex; align-items: center; gap: 12px; }
-
-        .status-pill {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-family: var(--mono);
-            font-weight: 500;
-        }
-
-        .status-pill.live {
-            background: rgba(34,197,94,0.1);
-            border: 1px solid rgba(34,197,94,0.2);
-            color: var(--green);
-        }
-
-        .pulse {
-            width: 6px; height: 6px;
-            background: var(--green);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-
-        .btn {
-            padding: 7px 16px;
-            border-radius: 8px;
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 13px;
-            cursor: pointer;
-            border: none;
-            transition: all 0.18s;
-            letter-spacing: 0.02em;
-        }
-
-        .btn-ghost {
-            background: var(--surface2);
-            color: var(--text-mid);
-            border: 1px solid var(--border2);
-        }
-        .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface3); }
-
-        .btn-green {
-            background: var(--green);
-            color: #000;
-        }
-        .btn-green:hover { background: #16a34a; }
-
-        .btn-red {
-            background: rgba(239,68,68,0.15);
-            color: var(--red);
-            border: 1px solid rgba(239,68,68,0.2);
-        }
-        .btn-red:hover { background: rgba(239,68,68,0.25); }
-
-        .btn-amber {
-            background: rgba(245,158,11,0.15);
-            color: var(--amber);
-            border: 1px solid rgba(245,158,11,0.2);
-        }
-        .btn-amber:hover { background: rgba(245,158,11,0.25); }
-
-        .btn-sm { padding: 5px 12px; font-size: 12px; }
-
-        /* ── CONTENT ── */
-        .content {
-            padding: 28px;
-            flex: 1;
-        }
-
-        /* ── VIEWS ── */
-        .view { display: none; }
-        .view.active { display: block; animation: fadeIn 0.25s ease; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── STAT CARDS ── */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-color, var(--green)), transparent);
-        }
-
-        .stat-label {
-            font-size: 11px;
-            font-family: var(--mono);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 28px;
-            letter-spacing: -0.02em;
-            color: var(--text);
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .stat-delta {
-            font-size: 12px;
-            font-family: var(--mono);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .stat-delta.up { color: var(--green); }
-        .stat-delta.down { color: var(--red); }
-        .stat-delta.neutral { color: var(--text-dim); }
-
-        .stat-icon {
-            position: absolute;
-            top: 16px; right: 16px;
-            width: 36px; height: 36px;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--surface2);
-        }
-
-        /* ── SECTION HEADER ── */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 15px;
-            letter-spacing: -0.01em;
-            color: var(--text);
-        }
-
-        .section-sub {
-            font-size: 12px;
-            color: var(--text-dim);
-            margin-top: 2px;
-            font-family: var(--mono);
-        }
-
-        /* ── TABLE ── */
-        .table-wrap {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .table-toolbar {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .search-input {
-            flex: 1;
-            max-width: 280px;
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            padding: 7px 12px 7px 32px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            color: var(--text);
-            outline: none;
-            position: relative;
-        }
-
-        .search-wrap {
-            position: relative;
-            flex: 1;
-            max-width: 280px;
-        }
-
-        .search-wrap svg {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-dim);
+        .sidebar::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(34,197,94,0.15) 0%, transparent 60%),
+                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
             pointer-events: none;
         }
+        .sidebar-logo {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+        }
+        .nav-group-label {
+            font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            padding: 14px 20px 5px; position: relative;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 14px; margin: 2px 10px; border-radius: 10px;
+            cursor: pointer; transition: all 0.18s;
+            color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 500;
+            position: relative; text-decoration: none;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+        .nav-item.active { background: rgba(34,197,94,0.18); color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+        .nav-item.active svg { color: var(--green-bright); }
+        .nav-badge {
+            margin-left: auto; font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 10px; min-width: 20px; text-align: center;
+        }
+        .nb-amber { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+        .nb-green { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .nb-red   { background: rgba(239,68,68,0.2);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
 
-        .search-input:focus { border-color: var(--green-dim); }
+        .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); position: relative; }
 
-        .filter-select {
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            padding: 7px 28px 7px 10px;
-            font-family: var(--mono);
-            font-size: 12px;
-            color: var(--text-mid);
-            outline: none;
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a6650' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
+        .main { margin-left: 240px; min-height: 100vh; }
+
+        .topbar {
+            background: white; border-bottom: 1px solid #e5e7eb;
+            height: 60px; display: flex; align-items: center;
+            padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 50;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.05);
         }
 
-        .filter-select:focus { border-color: var(--green-dim); }
+        .content { padding: 28px; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .view { display: none; }
+        .view.active { display: block; animation: fadeUp 0.25s ease; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        /* Stat Cards */
+        .stat-card {
+            background: white; border-radius: 16px; padding: 22px 24px;
+            border: 1px solid #e9f5ee; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
         }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.08); }
+        .stat-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0; }
+        .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; letter-spacing: -0.03em; color: #0f1a13; line-height: 1; margin-bottom: 4px; }
+        .stat-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; }
+        .stat-sub { font-size: 12px; color: #9ca3af; }
 
-        thead tr {
-            border-bottom: 1px solid var(--border);
-        }
+        /* Cards */
+        .card { background: white; border-radius: 16px; border: 1px solid #e9f5ee; box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow: hidden; }
+        .card-header { padding: 18px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; color: #0f1a13; }
+        .card-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
 
-        th {
-            padding: 10px 14px;
-            text-align: left;
-            font-size: 10px;
-            font-family: var(--mono);
-            font-weight: 500;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            white-space: nowrap;
-        }
+        /* Table */
+        .table-toolbar { padding: 14px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .search-wrap { position: relative; flex: 1; max-width: 300px; }
+        .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; }
+        .search-input { width: 100%; background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 8px 12px 8px 34px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #374151; outline: none; transition: border-color 0.2s; }
+        .search-input:focus { border-color: var(--green-brand); background: white; }
+        .filter-select { background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 8px 28px 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #374151; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239ca3af' d='M5 6L0 0h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+        .filter-select:focus { border-color: var(--green-brand); }
 
-        td {
-            padding: 13px 14px;
-            font-size: 13px;
-            color: var(--text-mid);
-            border-bottom: 1px solid var(--border);
-        }
-
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: #f9fafb; }
+        th { padding: 10px 16px; text-align: left; font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+        td { padding: 13px 16px; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f9fafb; }
         tr:last-child td { border-bottom: none; }
-
         tbody tr { transition: background 0.15s; }
-        tbody tr:hover { background: var(--surface2); }
+        tbody tr:hover { background: #fafdf9; }
+        tbody tr.highlight { background: #fffbeb; }
+        tbody tr.highlight:hover { background: #fef9e7; }
+        .td-main { font-weight: 600; color: #111827; font-size: 13px; }
+        .td-mono { font-family: 'Courier New', monospace; font-size: 12px; }
+        .empty-cell { text-align: center; padding: 48px 20px; color: #9ca3af; font-size: 13px; }
 
-        .td-name {
-            font-weight: 600;
-            color: var(--text);
-            font-size: 13px;
-        }
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap; }
+        .bg { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .ba { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .br { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .bb { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .bz { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
 
-        .td-mono {
-            font-family: var(--mono);
-            font-size: 12px;
-        }
+        /* Buttons */
+        .btn { padding: 7px 16px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: all 0.18s; letter-spacing: 0.02em; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: linear-gradient(135deg, var(--green-brand), #15803d); color: white; box-shadow: 0 2px 8px rgba(22,163,74,0.3); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(22,163,74,0.4); }
+        .btn-ghost { background: #f3f4f6; color: #374151; border: 1.5px solid #e5e7eb; }
+        .btn-ghost:hover { background: #e5e7eb; }
+        .btn-gl { background: #dcfce7; color: #15803d; border: 1.5px solid #bbf7d0; }
+        .btn-gl:hover { background: #bbf7d0; }
+        .btn-rl { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fecaca; }
+        .btn-rl:hover { background: #fecaca; }
+        .btn-al { background: #fef3c7; color: #b45309; border: 1.5px solid #fde68a; }
+        .btn-al:hover { background: #fde68a; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
 
-        /* ── BADGES ── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 9px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-family: var(--mono);
-            font-weight: 500;
-            white-space: nowrap;
-        }
+        /* Avatar */
+        .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+        .av-green { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; }
+        .av-blue  { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1d4ed8; }
 
-        .badge-green { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-        .badge-amber { background: rgba(245,158,11,0.1); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
-        .badge-red { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
-        .badge-blue { background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
-        .badge-dim { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border2); }
-
-        /* ── ACTIONS ── */
-        .action-group { display: flex; gap: 6px; }
-
-        /* ── MODAL ── */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(4px);
-            z-index: 200;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.open { display: flex; }
+        .modal { background: white; border-radius: 20px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,0.2); animation: modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+        .modal-sm { max-width: 440px; }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .modal-header { padding: 22px 28px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: white; z-index: 1; }
+        .modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: #0f1a13; }
+        .modal-body { padding: 24px 28px; }
+        .modal-footer { padding: 16px 28px; border-top: 1px solid #f3f4f6; display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-close { background: #f3f4f6; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #9ca3af; font-size: 16px; transition: all 0.15s; }
+        .modal-close:hover { background: #e5e7eb; color: #374151; }
 
-        .modal {
-            background: var(--surface);
-            border: 1px solid var(--border2);
-            border-radius: 16px;
-            width: 100%;
-            max-width: 680px;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: modalIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+        /* Detail */
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .detail-item { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; padding: 12px 14px; }
+        .detail-label { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; }
+        .detail-value { font-size: 14px; font-weight: 500; color: #111827; }
 
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        /* Doc card */
+        .doc-card { background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.18s; }
+        .doc-card:hover { border-color: var(--green-brand); background: #f0fdf4; }
+        .doc-card.has-doc { border-color: #bbf7d0; background: #f0fdf4; }
+        .doc-card.no-doc { border-color: #fecaca; background: #fff5f5; }
 
-        .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            background: var(--surface);
-            z-index: 1;
-        }
+        /* Section divider */
+        .sdiv { display: flex; align-items: center; gap: 10px; margin: 20px 0 14px; }
+        .sdiv span { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green-brand); white-space: nowrap; }
+        .sdiv::before, .sdiv::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
 
-        .modal-title {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 16px;
-            color: var(--text);
-        }
+        /* Activity */
+        .act-item { padding: 13px 20px; border-bottom: 1px solid #f9fafb; display: flex; align-items: flex-start; gap: 12px; }
+        .act-item:last-child { border-bottom: none; }
+        .act-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
 
-        .modal-body { padding: 24px; }
+        /* Pulse */
+        .pulse { width: 8px; height: 8px; background: var(--green-bright); border-radius: 50%; animation: pl 2s infinite; display: inline-block; }
+        @keyframes pl { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.8);} }
 
-        .modal-close {
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            color: var(--text-mid);
-            transition: all 0.15s;
-        }
+        /* Toast */
+        .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 13px 18px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: #374151; box-shadow: 0 8px 32px rgba(0,0,0,0.12); animation: slideUp 0.3s ease; min-width: 260px; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+        .toast.success { border-left: 4px solid var(--green-bright); }
+        .toast.error   { border-left: 4px solid #ef4444; }
+        .toast.info    { border-left: 4px solid #3b82f6; }
 
-        .modal-close:hover { color: var(--text); background: var(--surface3); }
-
-        /* ── DETAIL GRID ── */
-        .detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .detail-item {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 14px;
-        }
-
-        .detail-label {
-            font-size: 10px;
-            font-family: var(--mono);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 4px;
-        }
-
-        .detail-value {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        /* ── DOC CARDS ── */
-        .doc-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .doc-card {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px;
-            cursor: pointer;
-            transition: all 0.18s;
-        }
-
-        .doc-card:hover { border-color: var(--green-dim); background: var(--surface3); }
-
-        .doc-card.has-file { border-color: rgba(34,197,94,0.2); }
-        .doc-card.missing { border-color: rgba(239,68,68,0.2); }
-
-        .doc-type {
-            font-size: 10px;
-            font-family: var(--mono);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 8px;
-        }
-
-        .doc-filename {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .doc-status {
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* ── MODAL ACTIONS ── */
-        .modal-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        /* ── LOADING ── */
-        .loading-row td {
-            text-align: center;
-            padding: 48px;
-            color: var(--text-dim);
-            font-family: var(--mono);
-            font-size: 13px;
-        }
-
-        /* ── EMPTY STATE ── */
-        .empty-state {
-            text-align: center;
-            padding: 56px 24px;
-            color: var(--text-dim);
-        }
-
-        .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
-        .empty-state p { font-family: var(--mono); font-size: 13px; }
-
-        /* ── TOAST ── */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 300;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .toast {
-            background: var(--surface);
-            border: 1px solid var(--border2);
-            border-radius: 10px;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            animation: slideUp 0.3s ease;
-            min-width: 260px;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .toast.success { border-left: 3px solid var(--green); }
-        .toast.error { border-left: 3px solid var(--red); }
-        .toast.info { border-left: 3px solid var(--blue); }
-
-        /* ── ACTIVITY FEED ── */
-        .activity-feed {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .activity-item {
-            padding: 13px 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .activity-item:last-child { border-bottom: none; }
-
-        .activity-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            margin-top: 5px;
-            flex-shrink: 0;
-        }
-
-        .activity-text { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
-        .activity-text strong { color: var(--text); font-weight: 600; }
-        .activity-time { font-size: 11px; color: var(--text-dim); font-family: var(--mono); margin-top: 2px; }
-
-        /* ── GRID LAYOUT ── */
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-
-        /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--surface); }
-        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
-
-        /* ── PROFILE PIC ── */
-        .avatar-sm {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--green-dark), var(--green-dim));
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 12px;
-            color: var(--green);
-            flex-shrink: 0;
-        }
-
-        .flex-center { display: flex; align-items: center; gap: 10px; }
-
-        /* ── PENDING REVIEW HIGHLIGHT ── */
-        tr.needs-review td { background: rgba(245,158,11,0.03); }
-
-        /* ── CONFIRMATION MODAL ── */
-        .confirm-modal {
-            max-width: 420px;
-        }
-
-        /* ── MINI CHART ── */
-        .sparkline {
-            height: 32px;
-            display: flex;
-            align-items: flex-end;
-            gap: 2px;
-            margin-top: 10px;
-        }
-
-        .spark-bar {
-            flex: 1;
-            background: var(--green-glow);
-            border-radius: 2px 2px 0 0;
-            transition: background 0.2s;
-        }
-
-        .spark-bar:hover { background: rgba(34,197,94,0.3); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f9fafb; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -803,87 +204,83 @@
 <!-- SIDEBAR -->
 <aside class="sidebar">
     <div class="sidebar-logo">
-        <div class="wordmark">
-            <div class="icon">
-                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
+        <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
-            TowNow
-        </div>
-        <div class="admin-badge">Admin Console</div>
+            <div>
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:white;letter-spacing:-0.02em;line-height:1;">TowNow</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;">Admin Console</div>
+            </div>
+        </a>
     </div>
 
-    <div class="nav-section">
-        <div class="nav-label">Overview</div>
-        <div class="nav-item active" onclick="showView('overview', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <div style="overflow-y:auto;flex:1;padding-bottom:8px;position:relative;">
+        <div class="nav-group-label">Overview</div>
+        <div class="nav-item active" onclick="showView('overview',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Dashboard
         </div>
-        <div class="nav-item" onclick="showView('activity', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div class="nav-item" onclick="showView('activity',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             Live Activity
         </div>
-    </div>
 
-    <div class="nav-section">
-        <div class="nav-label">People</div>
-        <div class="nav-item" onclick="showView('drivers', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <div class="nav-group-label">People</div>
+        <div class="nav-item" onclick="showView('drivers',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
             Drivers
-            <span class="nav-badge amber" id="pending-count">0</span>
+            <span class="nav-badge nb-amber" id="pending-count">0</span>
         </div>
-        <div class="nav-item" onclick="showView('customers', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="nav-item" onclick="showView('customers',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Customers
         </div>
-    </div>
 
-    <div class="nav-section">
-        <div class="nav-label">Operations</div>
-        <div class="nav-item" onclick="showView('tows', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        <div class="nav-group-label">Operations</div>
+        <div class="nav-item" onclick="showView('tows',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             Tow Requests
-            <span class="nav-badge green" id="active-tows-count">0</span>
+            <span class="nav-badge nb-green" id="active-count">0</span>
         </div>
-        <div class="nav-item" onclick="showView('documents', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div class="nav-item" onclick="showView('documents',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             Documents
-            <span class="nav-badge" id="doc-review-count">0</span>
+            <span class="nav-badge nb-red" id="doc-count">0</span>
         </div>
-    </div>
 
-    <div class="nav-section">
-        <div class="nav-label">Finance</div>
-        <div class="nav-item" onclick="showView('payouts', this)">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <div class="nav-group-label">Finance</div>
+        <div class="nav-item" onclick="showView('payouts',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             Payouts
         </div>
     </div>
 
     <div class="sidebar-footer">
-        <div class="admin-user">
-            <div class="admin-avatar" id="admin-initials">A</div>
-            <div class="admin-info">
-                <div class="name" id="admin-name">Admin</div>
-                <div class="role">superadmin</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.08);">
+            <div style="width:34px;height:34px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:white;flex-shrink:0;" id="admin-avatar">A</div>
+            <div>
+                <div style="font-size:13px;font-weight:600;color:white;" id="admin-name">Admin</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.35);">Super Admin</div>
             </div>
         </div>
-        <button class="btn btn-ghost" style="width:100%; margin-top:8px; font-size:12px;" onclick="logout()">Sign Out</button>
+        <button onclick="logout()" style="margin-top:8px;width:100%;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.4);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Sign Out</button>
     </div>
 </aside>
 
 <!-- MAIN -->
 <main class="main">
+    <!-- Topbar -->
     <div class="topbar">
-        <h1 id="view-title">Dashboard Overview</h1>
-        <div class="topbar-actions">
-            <div class="status-pill live">
-                <div class="pulse"></div>
-                Live
+        <div style="flex:1;">
+            <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#0f1a13;letter-spacing:-0.01em;" id="view-title">Dashboard Overview</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;align-items:center;gap:6px;padding:5px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#15803d;">
+                <span class="pulse"></span> Live
             </div>
-            <button class="btn btn-ghost" onclick="refreshAll()">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline; margin-right:4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            <button class="btn btn-ghost btn-sm" onclick="refreshAll()">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
                 Refresh
             </button>
         </div>
@@ -893,166 +290,119 @@
 
         <!-- ══ OVERVIEW ══ -->
         <div class="view active" id="view-overview">
-            <div class="stats-grid">
-                <div class="stat-card" style="--accent-color: var(--green)">
-                    <div class="stat-icon"><svg width="18" height="18" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+                <div class="stat-card">
+                    <div class="stat-bar" style="background:linear-gradient(90deg,#22c55e,#16a34a);"></div>
+                    <div class="stat-icon" style="background:#dcfce7;">
+                        <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                    </div>
                     <div class="stat-label">Total Drivers</div>
-                    <div class="stat-value" id="stat-total-drivers">—</div>
-                    <div class="stat-delta neutral" id="stat-drivers-online">— online now</div>
-                    <div class="sparkline" id="spark-drivers"></div>
+                    <div class="stat-value" id="s-drivers">—</div>
+                    <div class="stat-sub" id="s-online">— online now</div>
                 </div>
-                <div class="stat-card" style="--accent-color: var(--blue)">
-                    <div class="stat-icon"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                    <div class="stat-label">Total Customers</div>
-                    <div class="stat-value" id="stat-total-customers">—</div>
-                    <div class="stat-delta up" id="stat-customers-new">↑ — this week</div>
+                <div class="stat-card">
+                    <div class="stat-bar" style="background:linear-gradient(90deg,#3b82f6,#1d4ed8);"></div>
+                    <div class="stat-icon" style="background:#dbeafe;">
+                        <svg width="20" height="20" fill="none" stroke="#1d4ed8" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <div class="stat-label">Customers</div>
+                    <div class="stat-value" id="s-customers">—</div>
+                    <div class="stat-sub">Registered users</div>
                 </div>
-                <div class="stat-card" style="--accent-color: var(--amber)">
-                    <div class="stat-icon"><svg width="18" height="18" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+                <div class="stat-card">
+                    <div class="stat-bar" style="background:linear-gradient(90deg,#f59e0b,#d97706);"></div>
+                    <div class="stat-icon" style="background:#fef3c7;">
+                        <svg width="20" height="20" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    </div>
                     <div class="stat-label">Active Tows</div>
-                    <div class="stat-value" id="stat-active-tows">—</div>
-                    <div class="stat-delta neutral" id="stat-tows-today">— completed today</div>
+                    <div class="stat-value" id="s-tows">—</div>
+                    <div class="stat-sub" id="s-today">— completed today</div>
                 </div>
-                <div class="stat-card" style="--accent-color: #a855f7">
-                    <div class="stat-icon"><svg width="18" height="18" fill="none" stroke="#a855f7" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
-                    <div class="stat-label">Revenue (MTD)</div>
-                    <div class="stat-value" id="stat-revenue">—</div>
-                    <div class="stat-delta up" id="stat-revenue-delta">↑ vs last month</div>
+                <div class="stat-card">
+                    <div class="stat-bar" style="background:linear-gradient(90deg,#8b5cf6,#7c3aed);"></div>
+                    <div class="stat-icon" style="background:#ede9fe;">
+                        <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    </div>
+                    <div class="stat-label">Revenue MTD</div>
+                    <div class="stat-value" id="s-rev">—</div>
+                    <div class="stat-sub">This month</div>
                 </div>
             </div>
 
-            <div class="three-col">
-                <!-- Pending Approvals -->
-                <div>
-                    <div class="section-header">
-                        <div>
-                            <div class="section-title">Pending Driver Approvals</div>
-                            <div class="section-sub">Requires your action</div>
-                        </div>
-                        <button class="btn btn-ghost btn-sm" onclick="showView('drivers', document.querySelector('.nav-item:nth-child(2)'))">View all</button>
+            <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:20px;">
+                <div class="card">
+                    <div class="card-header">
+                        <div><div class="card-title">Pending Driver Approvals</div><div class="card-sub">Requires your review</div></div>
+                        <button class="btn btn-ghost btn-sm" onclick="showView('drivers',document.querySelectorAll('.nav-item')[2])">View all →</button>
                     </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Driver</th>
-                                    <th>Applied</th>
-                                    <th>Docs</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="pending-approvals-table">
-                                <tr class="loading-row"><td colspan="4">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <table><thead><tr><th>Driver</th><th>Applied</th><th>Docs</th><th>Actions</th></tr></thead>
+                    <tbody id="pending-table"><tr><td colspan="4" class="empty-cell">Loading...</td></tr></tbody></table>
                 </div>
-
-                <!-- Activity -->
-                <div>
-                    <div class="section-header">
-                        <div>
-                            <div class="section-title">Recent Activity</div>
-                            <div class="section-sub">Last 24 hours</div>
-                        </div>
-                    </div>
-                    <div class="activity-feed" id="activity-feed">
-                        <div class="empty-state"><p>Loading activity...</p></div>
-                    </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title">Recent Activity</div></div>
+                    <div id="activity-mini"><div class="empty-cell">Loading...</div></div>
                 </div>
             </div>
         </div>
 
         <!-- ══ DRIVERS ══ -->
         <div class="view" id="view-drivers">
-            <div class="section-header" style="margin-bottom: 20px;">
-                <div>
-                    <div class="section-title">Driver Management</div>
-                    <div class="section-sub">Approve, suspend, and manage all drivers</div>
-                </div>
+            <div style="margin-bottom:20px;">
+                <h2 style="font-size:20px;color:#0f1a13;">Driver Management</h2>
+                <p style="font-size:13px;color:#9ca3af;margin-top:2px;">Approve, reject, and manage all drivers</p>
             </div>
-            <div class="table-wrap">
+            <div class="card">
                 <div class="table-toolbar">
                     <div class="search-wrap">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input class="search-input" type="text" placeholder="Search drivers..." oninput="filterDrivers(this.value)">
+                        <input class="search-input" type="text" placeholder="Search name, email, license..." oninput="filterDrivers(this.value)">
                     </div>
-                    <select class="filter-select" id="driver-status-filter" onchange="filterDrivers()">
+                    <select class="filter-select" onchange="filterByStatus(this.value)">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Rejected</option>
                         <option value="suspended">Suspended</option>
                     </select>
-                    <select class="filter-select" onchange="filterDriversByOnline(this.value)">
-                        <option value="">All</option>
+                    <select class="filter-select" onchange="filterByOnline(this.value)">
+                        <option value="">Online / Offline</option>
                         <option value="online">Online</option>
                         <option value="offline">Offline</option>
                     </select>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Driver</th>
-                            <th>License</th>
-                            <th>Vehicle</th>
-                            <th>Status</th>
-                            <th>Online</th>
-                            <th>Rating</th>
-                            <th>Tows</th>
-                            <th>Applied</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="drivers-table">
-                        <tr class="loading-row"><td colspan="9">Loading drivers...</td></tr>
-                    </tbody>
-                </table>
+                <table><thead><tr>
+                    <th>Driver</th><th>License</th><th>Vehicle</th><th>Status</th>
+                    <th>Online</th><th>Rating</th><th>Tows</th><th>Applied</th><th>Actions</th>
+                </tr></thead><tbody id="drivers-table"><tr><td colspan="9" class="empty-cell">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
         <!-- ══ CUSTOMERS ══ -->
         <div class="view" id="view-customers">
-            <div class="section-header" style="margin-bottom: 20px;">
-                <div>
-                    <div class="section-title">Customer Management</div>
-                    <div class="section-sub">All registered customers</div>
-                </div>
+            <div style="margin-bottom:20px;">
+                <h2 style="font-size:20px;color:#0f1a13;">Customer Management</h2>
+                <p style="font-size:13px;color:#9ca3af;margin-top:2px;">All registered customers</p>
             </div>
-            <div class="table-wrap">
+            <div class="card">
                 <div class="table-toolbar">
                     <div class="search-wrap">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <input class="search-input" type="text" placeholder="Search customers..." oninput="filterCustomers(this.value)">
                     </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Phone</th>
-                            <th>Total Tows</th>
-                            <th>Joined</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customers-table">
-                        <tr class="loading-row"><td colspan="6">Loading customers...</td></tr>
-                    </tbody>
-                </table>
+                <table><thead><tr>
+                    <th>Customer</th><th>Phone</th><th>Tows</th><th>Joined</th><th>Status</th><th>Actions</th>
+                </tr></thead><tbody id="customers-table"><tr><td colspan="6" class="empty-cell">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
-        <!-- ══ TOW REQUESTS ══ -->
+        <!-- ══ TOWS ══ -->
         <div class="view" id="view-tows">
-            <div class="section-header" style="margin-bottom: 20px;">
-                <div>
-                    <div class="section-title">Tow Requests</div>
-                    <div class="section-sub">Monitor all tow activity in real-time</div>
-                </div>
+            <div style="margin-bottom:20px;">
+                <h2 style="font-size:20px;color:#0f1a13;">Tow Requests</h2>
+                <p style="font-size:13px;color:#9ca3af;margin-top:2px;">Monitor all tow activity in real-time</p>
             </div>
-            <div class="table-wrap">
+            <div class="card">
                 <div class="table-toolbar">
                     <div class="search-wrap">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1062,820 +412,438 @@
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="accepted">Accepted</option>
-                        <option value="en_route_pickup">En Route</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Customer</th>
-                            <th>Pickup</th>
-                            <th>Dropoff</th>
-                            <th>Driver</th>
-                            <th>Status</th>
-                            <th>Price</th>
-                            <th>Created</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tows-table">
-                        <tr class="loading-row"><td colspan="8">Loading tow requests...</td></tr>
-                    </tbody>
-                </table>
+                <table><thead><tr>
+                    <th>ID</th><th>Customer</th><th>Pickup</th><th>Dropoff</th>
+                    <th>Driver</th><th>Status</th><th>Price</th><th>Date</th>
+                </tr></thead><tbody id="tows-table"><tr><td colspan="8" class="empty-cell">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
         <!-- ══ DOCUMENTS ══ -->
         <div class="view" id="view-documents">
-            <div class="section-header" style="margin-bottom: 20px;">
-                <div>
-                    <div class="section-title">Document Review</div>
-                    <div class="section-sub">Review and verify driver-submitted documents</div>
-                </div>
+            <div style="margin-bottom:20px;">
+                <h2 style="font-size:20px;color:#0f1a13;">Document Review</h2>
+                <p style="font-size:13px;color:#9ca3af;margin-top:2px;">Verify driver-submitted documents</p>
             </div>
-            <div class="table-wrap">
+            <div class="card">
                 <div class="table-toolbar">
                     <div class="search-wrap">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <input class="search-input" type="text" placeholder="Search driver...">
                     </div>
-                    <select class="filter-select">
-                        <option value="">All Documents</option>
-                        <option value="dl_photo">Driver's License</option>
-                        <option value="insurance">Insurance</option>
-                        <option value="vehicle_registration">Registration</option>
-                    </select>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Driver</th>
-                            <th>License #</th>
-                            <th>DL Photo</th>
-                            <th>Insurance</th>
-                            <th>Registration</th>
-                            <th>Approval</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="documents-table">
-                        <tr class="loading-row"><td colspan="7">Loading documents...</td></tr>
-                    </tbody>
-                </table>
+                <table><thead><tr>
+                    <th>Driver</th><th>License #</th><th>DL Photo</th><th>Insurance</th>
+                    <th>Registration</th><th>Approval</th><th>Actions</th>
+                </tr></thead><tbody id="docs-table"><tr><td colspan="7" class="empty-cell">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
         <!-- ══ PAYOUTS ══ -->
         <div class="view" id="view-payouts">
-            <div class="section-header" style="margin-bottom: 20px;">
-                <div>
-                    <div class="section-title">Payouts & Financials</div>
-                    <div class="section-sub">Driver earnings and platform revenue</div>
-                </div>
+            <div style="margin-bottom:20px;">
+                <h2 style="font-size:20px;color:#0f1a13;">Payouts & Financials</h2>
+                <p style="font-size:13px;color:#9ca3af;margin-top:2px;">Driver earnings and platform revenue</p>
             </div>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Driver</th>
-                            <th>Total Earned</th>
-                            <th>Commission</th>
-                            <th>Net Payout</th>
-                            <th>Tows</th>
-                            <th>Bank Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="payouts-table">
-                        <tr class="loading-row"><td colspan="7">Loading payouts...</td></tr>
-                    </tbody>
-                </table>
+            <div class="card">
+                <table><thead><tr>
+                    <th>Driver</th><th>Total Revenue</th><th>Commission</th><th>Driver Payout</th>
+                    <th>Tows</th><th>Bank Status</th><th></th>
+                </tr></thead><tbody id="payouts-table"><tr><td colspan="7" class="empty-cell">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
         <!-- ══ ACTIVITY ══ -->
         <div class="view" id="view-activity">
-            <div class="section-header" style="margin-bottom: 20px;">
-                <div>
-                    <div class="section-title">Live Activity Feed</div>
-                    <div class="section-sub">Real-time platform events</div>
-                </div>
+            <div style="margin-bottom:20px;">
+                <h2 style="font-size:20px;color:#0f1a13;">Live Activity Feed</h2>
             </div>
-            <div class="activity-feed" id="full-activity-feed">
-                <div class="empty-state"><p>Loading activity...</p></div>
-            </div>
+            <div class="card" id="full-activity"><div class="empty-cell">Loading...</div></div>
         </div>
 
     </div>
 </main>
 
-<!-- ══ DRIVER DETAIL MODAL ══ -->
+<!-- Driver Modal -->
 <div class="modal-overlay" id="driver-modal">
     <div class="modal">
         <div class="modal-header">
-            <div class="modal-title" id="modal-driver-name">Driver Details</div>
+            <div>
+                <div class="modal-title" id="m-name">Driver Details</div>
+                <div id="m-badge" style="margin-top:6px;"></div>
+            </div>
             <button class="modal-close" onclick="closeModal('driver-modal')">✕</button>
         </div>
         <div class="modal-body">
-            <div class="detail-grid" id="modal-driver-details"></div>
-
-            <div style="margin-bottom: 16px;">
-                <div class="section-title" style="font-size:13px; margin-bottom:12px;">
-                    <svg width="14" height="14" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24" style="display:inline; margin-right:6px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Uploaded Documents
-                </div>
-                <div class="doc-grid" id="modal-docs"></div>
-            </div>
-
-            <div>
-                <div class="section-title" style="font-size:13px; margin-bottom:12px;">
-                    <svg width="14" height="14" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24" style="display:inline; margin-right:6px;"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                    Vehicle Information
-                </div>
-                <div class="detail-grid" id="modal-vehicle-details"></div>
-            </div>
+            <div class="sdiv"><span>Personal &amp; License</span></div>
+            <div class="detail-grid" id="m-personal"></div>
+            <div class="sdiv"><span>Vehicle</span></div>
+            <div class="detail-grid" id="m-vehicle"></div>
+            <div class="sdiv"><span>Documents</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;" id="m-docs"></div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-red btn-sm" id="modal-reject-btn" onclick="confirmAction('reject')">Reject</button>
-            <button class="btn btn-amber btn-sm" id="modal-suspend-btn" onclick="confirmAction('suspend')">Suspend</button>
-            <button class="btn btn-green btn-sm" id="modal-approve-btn" onclick="confirmAction('approve')">Approve Driver</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeModal('driver-modal')">Close</button>
+            <button class="btn btn-rl btn-sm" id="btn-reject" onclick="confirmAction('reject')">Reject</button>
+            <button class="btn btn-al btn-sm" id="btn-suspend" onclick="confirmAction('suspend')">Suspend</button>
+            <button class="btn btn-primary btn-sm" id="btn-approve" onclick="confirmAction('approve')">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Approve Driver
+            </button>
         </div>
     </div>
 </div>
 
-<!-- ══ CONFIRM MODAL ══ -->
+<!-- Confirm Modal -->
 <div class="modal-overlay" id="confirm-modal">
-    <div class="modal confirm-modal">
+    <div class="modal modal-sm">
         <div class="modal-header">
-            <div class="modal-title" id="confirm-title">Confirm Action</div>
+            <div class="modal-title" id="c-title">Confirm</div>
             <button class="modal-close" onclick="closeModal('confirm-modal')">✕</button>
         </div>
         <div class="modal-body">
-            <p id="confirm-message" style="color: var(--text-mid); font-size:14px; line-height:1.6;"></p>
+            <p id="c-msg" style="color:#6b7280;font-size:14px;line-height:1.6;"></p>
             <div style="margin-top:16px;">
-                <label style="font-size:12px; color:var(--text-dim); font-family:var(--mono); display:block; margin-bottom:6px;">REASON / NOTE (optional)</label>
-                <textarea id="confirm-reason" rows="3" style="width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:10px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); outline:none; resize:vertical;"></textarea>
+                <label style="display:block;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Reason (optional)</label>
+                <textarea id="c-reason" rows="3" style="width:100%;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:#374151;outline:none;resize:vertical;"></textarea>
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-ghost btn-sm" onclick="closeModal('confirm-modal')">Cancel</button>
-            <button class="btn btn-sm" id="confirm-execute-btn" onclick="executeAction()">Confirm</button>
+            <button class="btn btn-sm" id="c-btn" onclick="executeAction()">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast-container" id="toast-container"></div>
+<div class="toast-wrap" id="toasts"></div>
 
 <script>
-// ──────────── AUTH ────────────
 const token = localStorage.getItem('auth_token');
 if (!token) window.location.href = 'admin-login.html';
 
-const API = '';
-let allDrivers = [], allCustomers = [], allTows = [];
-let selectedDriverId = null, pendingAction = null;
+let allDrivers=[], allCustomers=[], allTows=[];
+let selectedId=null, pendingAction=null;
 
-// ──────────── NAV ────────────
-const viewTitles = {
-    overview: 'Dashboard Overview',
-    drivers: 'Driver Management',
-    customers: 'Customer Management',
-    tows: 'Tow Requests',
-    documents: 'Document Review',
-    payouts: 'Payouts & Financials',
-    activity: 'Live Activity Feed'
-};
+const titles = { overview:'Dashboard Overview', activity:'Live Activity Feed', drivers:'Driver Management', customers:'Customer Management', tows:'Tow Requests', documents:'Document Review', payouts:'Payouts & Financials' };
 
 function showView(name, el) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('view-' + name).classList.add('active');
-    if (el) el.classList.add('active');
-    document.getElementById('view-title').textContent = viewTitles[name] || name;
-    loadView(name);
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('view-'+name).classList.add('active');
+    if(el) el.classList.add('active');
+    document.getElementById('view-title').textContent = titles[name]||name;
+    if(['drivers','documents','payouts'].includes(name)) loadDrivers();
+    if(name==='customers') loadCustomers();
+    if(name==='tows') loadTows();
+    if(name==='activity') renderFullActivity();
 }
 
-function loadView(name) {
-    if (name === 'drivers' || name === 'documents' || name === 'payouts') loadDrivers();
-    if (name === 'customers') loadCustomers();
-    if (name === 'tows') loadTows();
-    if (name === 'activity') loadActivity();
+async function api(path, opts={}) {
+    opts.headers = {...opts.headers, 'Authorization':`Bearer ${token}`, 'Content-Type':'application/json'};
+    try {
+        const r = await fetch(path, opts);
+        if(r.status===401) { window.location.href='admin-login.html'; return null; }
+        return r;
+    } catch(e) { toast('Network error','error'); return null; }
 }
 
-// ──────────── API HELPER ────────────
-async function api(path, opts = {}) {
-    opts.headers = { ...opts.headers, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-    const res = await fetch(API + path, opts);
-    if (res.status === 401) { window.location.href = 'admin-login.html'; return null; }
-    return res;
-}
-
-// ──────────── LOAD OVERVIEW ────────────
 async function loadOverview() {
-    try {
-        // Load drivers for stats
-        const [drRes, custRes, towRes] = await Promise.all([
-            api('/api/v1/admin/drivers'),
-            api('/api/v1/admin/customers'),
-            api('/api/v1/admin/tows')
-        ]);
-
-        if (drRes?.ok) {
-            const drivers = await drRes.json();
-            allDrivers = drivers;
-            const online = drivers.filter(d => d.is_online).length;
-            const pending = drivers.filter(d => d.approval_status === 'pending').length;
-            document.getElementById('stat-total-drivers').textContent = drivers.length;
-            document.getElementById('stat-drivers-online').textContent = `${online} online now`;
-            document.getElementById('pending-count').textContent = pending;
-            document.getElementById('doc-review-count').textContent = pending;
-            renderPendingApprovals(drivers.filter(d => d.approval_status === 'pending').slice(0, 5));
-            renderDriversTable(drivers);
-            renderDocumentsTable(drivers);
-            renderPayoutsTable(drivers);
-            renderSparkline('spark-drivers', drivers.length);
-        }
-
-        if (custRes?.ok) {
-            const customers = await custRes.json();
-            allCustomers = customers;
-            document.getElementById('stat-total-customers').textContent = customers.length;
-            renderCustomersTable(customers);
-        }
-
-        if (towRes?.ok) {
-            const tows = await towRes.json();
-            allTows = tows;
-            const active = tows.filter(t => ['pending','accepted','en_route_pickup','vehicle_loaded','en_route_dropoff'].includes(t.status)).length;
-            const today = tows.filter(t => {
-                const d = new Date(t.created_at);
-                return d.toDateString() === new Date().toDateString() && t.status === 'completed';
-            }).length;
-            document.getElementById('stat-active-tows').textContent = active;
-            document.getElementById('active-tows-count').textContent = active;
-            document.getElementById('stat-tows-today').textContent = `${today} completed today`;
-            renderTowsTable(tows);
-        }
-
-        // Revenue (estimated from completed tows)
-        if (allTows.length) {
-            const rev = allTows
-                .filter(t => t.status === 'completed' && t.final_price)
-                .reduce((sum, t) => sum + parseFloat(t.final_price || 0), 0);
-            document.getElementById('stat-revenue').textContent = '$' + rev.toFixed(0);
-        }
-
-        renderActivity();
-
-    } catch (e) {
-        console.error('Overview load error:', e);
-        showToast('Failed to load dashboard data', 'error');
+    const [dr,cu,to] = await Promise.all([api('/api/v1/admin/drivers'), api('/api/v1/admin/customers'), api('/api/v1/admin/tows')]);
+    if(dr?.ok) {
+        allDrivers = await dr.json();
+        const online = allDrivers.filter(d=>d.is_online).length;
+        const pend = allDrivers.filter(d=>d.approval_status==='pending').length;
+        set('s-drivers', allDrivers.length);
+        set('s-online', online+' online now');
+        set('pending-count', pend);
+        set('doc-count', pend);
+        renderDrivers(allDrivers); renderDocs(allDrivers); renderPayouts(allDrivers);
+        renderPending(allDrivers.filter(d=>d.approval_status==='pending').slice(0,6));
     }
+    if(cu?.ok) {
+        allCustomers = await cu.json();
+        set('s-customers', allCustomers.length);
+        renderCustomers(allCustomers);
+    }
+    if(to?.ok) {
+        allTows = await to.json();
+        const active = allTows.filter(t=>['pending','accepted','en_route_pickup','vehicle_loaded','en_route_dropoff'].includes(t.status)).length;
+        const today = allTows.filter(t=>t.status==='completed' && new Date(t.updated_at).toDateString()===new Date().toDateString()).length;
+        const rev = allTows.filter(t=>t.status==='completed').reduce((s,t)=>s+parseFloat(t.final_price||0),0);
+        set('s-tows', active); set('active-count', active);
+        set('s-today', today+' completed today');
+        set('s-rev','$'+rev.toLocaleString('en-US',{maximumFractionDigits:0}));
+        renderTows(allTows);
+    }
+    renderActivityMini();
 }
 
-// ──────────── DRIVERS TABLE ────────────
 async function loadDrivers() {
-    if (allDrivers.length) { renderDriversTable(allDrivers); renderDocumentsTable(allDrivers); renderPayoutsTable(allDrivers); return; }
-    const res = await api('/api/v1/admin/drivers');
-    if (res?.ok) {
-        allDrivers = await res.json();
-        renderDriversTable(allDrivers);
-        renderDocumentsTable(allDrivers);
-        renderPayoutsTable(allDrivers);
-        const pending = allDrivers.filter(d => d.approval_status === 'pending').length;
-        document.getElementById('pending-count').textContent = pending;
-        document.getElementById('doc-review-count').textContent = pending;
-    }
+    if(allDrivers.length) { renderDrivers(allDrivers); renderDocs(allDrivers); renderPayouts(allDrivers); return; }
+    const r = await api('/api/v1/admin/drivers');
+    if(r?.ok) { allDrivers=await r.json(); renderDrivers(allDrivers); renderDocs(allDrivers); renderPayouts(allDrivers); badges(); }
 }
-
-function renderDriversTable(drivers) {
-    const tbody = document.getElementById('drivers-table');
-    if (!drivers.length) {
-        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><p>No drivers found</p></div></td></tr>`;
-        return;
-    }
-    tbody.innerHTML = drivers.map(d => `
-        <tr class="${d.approval_status === 'pending' ? 'needs-review' : ''}">
-            <td>
-                <div class="flex-center">
-                    <div class="avatar-sm">${initials(d.user?.first_name, d.user?.last_name)}</div>
-                    <div>
-                        <div class="td-name">${d.user?.first_name || ''} ${d.user?.last_name || ''}</div>
-                        <div style="font-size:11px; color:var(--text-dim); font-family:var(--mono);">${d.user?.email || '—'}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="td-mono">${d.license_number || '—'}<br><span style="color:var(--text-dim); font-size:10px;">${d.license_state || ''}</span></td>
-            <td style="font-size:12px;">${d.vehicle_year || ''} ${d.vehicle_make || ''} ${d.vehicle_model || ''}<br><span style="color:var(--text-dim); font-size:11px;">${d.vehicle_type || '—'}</span></td>
-            <td>${statusBadge(d.approval_status)}</td>
-            <td><span class="badge ${d.is_online ? 'badge-green' : 'badge-dim'}">${d.is_online ? '● Online' : '○ Offline'}</span></td>
-            <td class="td-mono">${d.rating || '5.00'} ⭐</td>
-            <td class="td-mono">${d.total_tows || 0}</td>
-            <td style="font-size:11px; color:var(--text-dim);">${fmtDate(d.created_at)}</td>
-            <td>
-                <div class="action-group">
-                    <button class="btn btn-ghost btn-sm" onclick="openDriverModal('${d.id}')">Review</button>
-                    ${d.approval_status === 'pending' ? `
-                        <button class="btn btn-green btn-sm" onclick="quickApprove('${d.id}')">✓</button>
-                        <button class="btn btn-red btn-sm" onclick="quickReject('${d.id}')">✗</button>
-                    ` : ''}
-                    ${d.approval_status === 'approved' ? `<button class="btn btn-amber btn-sm" onclick="quickSuspend('${d.id}')">Suspend</button>` : ''}
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// ──────────── DRIVER MODAL ────────────
-function openDriverModal(driverId) {
-    const d = allDrivers.find(dr => dr.id === driverId);
-    if (!d) return;
-    selectedDriverId = driverId;
-
-    document.getElementById('modal-driver-name').textContent = `${d.user?.first_name || ''} ${d.user?.last_name || ''} — ${statusBadge(d.approval_status)}`;
-
-    document.getElementById('modal-driver-details').innerHTML = [
-        ['Email', d.user?.email || '—'],
-        ['Phone', d.user?.phone || '—'],
-        ['License #', d.license_number || '—'],
-        ['License State', d.license_state || '—'],
-        ['License Class', d.license_class || '—'],
-        ['License Expiry', fmtDate(d.license_expiry)],
-        ['Insurance Provider', d.insurance_provider || '—'],
-        ['Policy #', d.policy_number || '—'],
-        ['Policy Expiry', fmtDate(d.policy_expiry)],
-        ['Experience', (d.towing_experience_years || '—') + ' yrs'],
-        ['Applied', fmtDate(d.created_at)],
-        ['Rating', (d.rating || '5.00') + ' ⭐'],
-    ].map(([l, v]) => `
-        <div class="detail-item">
-            <div class="detail-label">${l}</div>
-            <div class="detail-value">${v}</div>
-        </div>
-    `).join('');
-
-    document.getElementById('modal-vehicle-details').innerHTML = [
-        ['Year', d.vehicle_year || '—'],
-        ['Make', d.vehicle_make || '—'],
-        ['Model', d.vehicle_model || '—'],
-        ['Type', d.vehicle_type || '—'],
-        ['VIN', d.vin || '—'],
-        ['Plate', (d.license_plate || '—') + ' ' + (d.plate_state || '')],
-    ].map(([l, v]) => `
-        <div class="detail-item">
-            <div class="detail-label">${l}</div>
-            <div class="detail-value" style="font-family:var(--mono); font-size:13px;">${v}</div>
-        </div>
-    `).join('');
-
-    document.getElementById('modal-docs').innerHTML = [
-        ['dl_photo', "Driver's License", d.license_photo_url],
-        ['insurance', 'Insurance Certificate', d.insurance_photo_url],
-        ['vehicle_reg', 'Vehicle Registration', null],
-    ].map(([type, label, url]) => `
-        <div class="doc-card ${url ? 'has-file' : 'missing'}" ${url ? `onclick="window.open('${url}', '_blank')"` : ''}>
-            <div class="doc-type">${label}</div>
-            <div class="doc-filename">${url ? '📄 View Document' : '⚠ Not uploaded'}</div>
-            <div class="doc-status">
-                <span class="badge ${url ? 'badge-green' : 'badge-red'}">${url ? 'Uploaded' : 'Missing'}</span>
-                ${url ? '<span style="font-size:11px; color:var(--text-dim);">Click to view →</span>' : ''}
-            </div>
-        </div>
-    `).join('');
-
-    // Show/hide action buttons based on status
-    document.getElementById('modal-approve-btn').style.display = d.approval_status !== 'approved' ? 'inline-flex' : 'none';
-    document.getElementById('modal-reject-btn').style.display = d.approval_status !== 'rejected' ? 'inline-flex' : 'none';
-    document.getElementById('modal-suspend-btn').style.display = d.approval_status === 'approved' ? 'inline-flex' : 'none';
-
-    document.getElementById('driver-modal').classList.add('open');
-}
-
-// ──────────── ACTIONS ────────────
-function confirmAction(action) {
-    pendingAction = action;
-    const msgs = {
-        approve: `Approve this driver? They will be able to receive tow requests immediately.`,
-        reject: `Reject this driver application? They will be notified and can reapply.`,
-        suspend: `Suspend this driver? They will be taken offline immediately.`
-    };
-    const btnClasses = { approve: 'btn-green', reject: 'btn-red', suspend: 'btn-amber' };
-    document.getElementById('confirm-title').textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' Driver';
-    document.getElementById('confirm-message').textContent = msgs[action];
-    const btn = document.getElementById('confirm-execute-btn');
-    btn.className = `btn btn-sm ${btnClasses[action]}`;
-    btn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
-    document.getElementById('confirm-reason').value = '';
-    document.getElementById('confirm-modal').classList.add('open');
-}
-
-async function executeAction() {
-    if (!selectedDriverId || !pendingAction) return;
-
-    const statusMap = { approve: 'approved', reject: 'rejected', suspend: 'suspended' };
-    const newStatus = statusMap[pendingAction];
-    const reason = document.getElementById('confirm-reason').value;
-
-    try {
-        const res = await api(`/api/v1/admin/drivers/${selectedDriverId}/status`, {
-            method: 'PUT',
-            body: JSON.stringify({ approval_status: newStatus, reason })
-        });
-
-        if (res?.ok) {
-            // Update local state
-            const driver = allDrivers.find(d => d.id === selectedDriverId);
-            if (driver) driver.approval_status = newStatus;
-
-            closeModal('confirm-modal');
-            closeModal('driver-modal');
-            renderDriversTable(allDrivers);
-            renderDocumentsTable(allDrivers);
-
-            const pending = allDrivers.filter(d => d.approval_status === 'pending').length;
-            document.getElementById('pending-count').textContent = pending;
-            document.getElementById('doc-review-count').textContent = pending;
-
-            showToast(`Driver ${pendingAction}d successfully`, 'success');
-        } else {
-            const err = await res?.json();
-            showToast(err?.detail || 'Action failed', 'error');
-        }
-    } catch (e) {
-        showToast('Network error', 'error');
-    }
-}
-
-async function quickApprove(driverId) {
-    selectedDriverId = driverId;
-    pendingAction = 'approve';
-    document.getElementById('confirm-reason').value = '';
-    await executeAction();
-}
-
-async function quickReject(driverId) {
-    selectedDriverId = driverId;
-    const reason = prompt('Reason for rejection (optional):') || '';
-    pendingAction = 'reject';
-    document.getElementById('confirm-reason').value = reason;
-    await executeAction();
-}
-
-async function quickSuspend(driverId) {
-    selectedDriverId = driverId;
-    pendingAction = 'suspend';
-    document.getElementById('confirm-reason').value = '';
-    await executeAction();
-}
-
-// ──────────── CUSTOMERS ────────────
 async function loadCustomers() {
-    if (allCustomers.length) { renderCustomersTable(allCustomers); return; }
-    const res = await api('/api/v1/admin/customers');
-    if (res?.ok) {
-        allCustomers = await res.json();
-        renderCustomersTable(allCustomers);
-    }
+    if(allCustomers.length) { renderCustomers(allCustomers); return; }
+    const r = await api('/api/v1/admin/customers');
+    if(r?.ok) { allCustomers=await r.json(); renderCustomers(allCustomers); }
 }
-
-function renderCustomersTable(customers) {
-    const tbody = document.getElementById('customers-table');
-    if (!customers.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>No customers found</p></div></td></tr>`;
-        return;
-    }
-    tbody.innerHTML = customers.map(c => `
-        <tr>
-            <td>
-                <div class="flex-center">
-                    <div class="avatar-sm">${initials(c.first_name, c.last_name)}</div>
-                    <div>
-                        <div class="td-name">${c.first_name || ''} ${c.last_name || ''}</div>
-                        <div style="font-size:11px; color:var(--text-dim); font-family:var(--mono);">${c.email}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="td-mono">${c.phone || '—'}</td>
-            <td class="td-mono">${c.total_tows || 0}</td>
-            <td style="font-size:11px; color:var(--text-dim);">${fmtDate(c.created_at)}</td>
-            <td><span class="badge ${c.is_active ? 'badge-green' : 'badge-red'}">${c.is_active ? 'Active' : 'Suspended'}</span></td>
-            <td>
-                <div class="action-group">
-                    ${c.is_active
-                        ? `<button class="btn btn-amber btn-sm" onclick="suspendCustomer('${c.id}')">Suspend</button>`
-                        : `<button class="btn btn-green btn-sm" onclick="activateCustomer('${c.id}')">Activate</button>`
-                    }
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-async function suspendCustomer(id) {
-    const res = await api(`/api/v1/admin/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ is_active: false }) });
-    if (res?.ok) {
-        const c = allCustomers.find(c => c.id === id);
-        if (c) c.is_active = false;
-        renderCustomersTable(allCustomers);
-        showToast('Customer suspended', 'success');
-    }
-}
-
-async function activateCustomer(id) {
-    const res = await api(`/api/v1/admin/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ is_active: true }) });
-    if (res?.ok) {
-        const c = allCustomers.find(c => c.id === id);
-        if (c) c.is_active = true;
-        renderCustomersTable(allCustomers);
-        showToast('Customer activated', 'success');
-    }
-}
-
-// ──────────── TOWS ────────────
 async function loadTows() {
-    if (allTows.length) { renderTowsTable(allTows); return; }
-    const res = await api('/api/v1/admin/tows');
-    if (res?.ok) {
-        allTows = await res.json();
-        renderTowsTable(allTows);
-    }
+    if(allTows.length) { renderTows(allTows); return; }
+    const r = await api('/api/v1/admin/tows');
+    if(r?.ok) { allTows=await r.json(); renderTows(allTows); }
 }
 
-function renderTowsTable(tows) {
-    const tbody = document.getElementById('tows-table');
-    if (!tows.length) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>No tow requests found</p></div></td></tr>`;
-        return;
-    }
-    tbody.innerHTML = tows.map(t => `
-        <tr>
-            <td class="td-mono" style="font-size:11px; color:var(--text-dim);">${String(t.id).slice(0,8)}…</td>
-            <td style="font-size:12px;">${t.customer?.first_name || '—'} ${t.customer?.last_name || ''}</td>
-            <td style="font-size:12px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.pickup_address || '—'}</td>
-            <td style="font-size:12px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.dropoff_address || '—'}</td>
-            <td style="font-size:12px;">${t.driver?.user?.first_name || '—'}</td>
-            <td>${towStatusBadge(t.status)}</td>
-            <td class="td-mono">$${parseFloat(t.final_price || t.estimated_price || 0).toFixed(2)}</td>
-            <td style="font-size:11px; color:var(--text-dim);">${fmtDate(t.created_at)}</td>
-        </tr>
-    `).join('');
+function badges() {
+    const p = allDrivers.filter(d=>d.approval_status==='pending').length;
+    set('pending-count',p); set('doc-count',p);
 }
 
-// ──────────── DOCUMENTS ────────────
-function renderDocumentsTable(drivers) {
-    const tbody = document.getElementById('documents-table');
-    if (!drivers.length) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>No documents to review</p></div></td></tr>`;
-        return;
-    }
-    tbody.innerHTML = drivers.map(d => `
-        <tr class="${d.approval_status === 'pending' ? 'needs-review' : ''}">
-            <td>
-                <div class="flex-center">
-                    <div class="avatar-sm">${initials(d.user?.first_name, d.user?.last_name)}</div>
-                    <div>
-                        <div class="td-name">${d.user?.first_name || ''} ${d.user?.last_name || ''}</div>
-                        <div style="font-size:11px; color:var(--text-dim);">${fmtDate(d.created_at)}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="td-mono">${d.license_number || '—'}</td>
-            <td>${docStatusBadge(d.license_photo_url)}</td>
-            <td>${docStatusBadge(d.insurance_photo_url)}</td>
-            <td><span class="badge badge-dim">N/A</span></td>
-            <td>${statusBadge(d.approval_status)}</td>
-            <td>
-                <div class="action-group">
-                    <button class="btn btn-ghost btn-sm" onclick="openDriverModal('${d.id}')">Review</button>
-                    ${d.approval_status === 'pending' ? `
-                        <button class="btn btn-green btn-sm" onclick="quickApprove('${d.id}')">Approve</button>
-                        <button class="btn btn-red btn-sm" onclick="quickReject('${d.id}')">Reject</button>
-                    ` : ''}
-                </div>
-            </td>
-        </tr>
-    `).join('');
+// ── RENDER ──
+function renderDrivers(list) {
+    const tb = document.getElementById('drivers-table');
+    if(!list.length){tb.innerHTML=`<tr><td colspan="9" class="empty-cell">No drivers found</td></tr>`;return;}
+    tb.innerHTML = list.map(d=>`
+    <tr class="${d.approval_status==='pending'?'highlight':''}">
+        <td><div style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar av-green">${ini(d.user?.first_name,d.user?.last_name)}</div>
+            <div><div class="td-main">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
+            <div style="font-size:11px;color:#9ca3af;">${d.user?.email||'—'}</div></div>
+        </div></td>
+        <td><div class="td-mono">${d.license_number||'—'}</div><div style="font-size:11px;color:#9ca3af;">${d.license_state||''} · ${d.license_class||'—'}</div></td>
+        <td style="font-size:12px;">${[d.vehicle_year,d.vehicle_make,d.vehicle_model].filter(Boolean).join(' ')||'—'}<div style="font-size:11px;color:#9ca3af;">${d.vehicle_type||''}</div></td>
+        <td>${sbadge(d.approval_status)}</td>
+        <td><span class="badge ${d.is_online?'bg':'bz'}">${d.is_online?'● Online':'○ Offline'}</span></td>
+        <td style="font-weight:600;color:#374151;">${d.rating||'5.0'} ⭐</td>
+        <td class="td-mono">${d.total_tows||0}</td>
+        <td style="font-size:11px;color:#9ca3af;">${fmt(d.created_at)}</td>
+        <td><div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="openModal('${d.id}')">Review</button>
+            ${d.approval_status==='pending'?`<button class="btn btn-gl btn-sm" onclick="quick('${d.id}','approve')">✓</button><button class="btn btn-rl btn-sm" onclick="quick('${d.id}','reject')">✗</button>`:''}
+            ${d.approval_status==='approved'?`<button class="btn btn-al btn-sm" onclick="quick('${d.id}','suspend')">Suspend</button>`:''}
+            ${['suspended','rejected'].includes(d.approval_status)?`<button class="btn btn-gl btn-sm" onclick="quick('${d.id}','approve')">Reactivate</button>`:''}
+        </div></td>
+    </tr>`).join('');
 }
 
-// ──────────── PAYOUTS ────────────
-function renderPayoutsTable(drivers) {
-    const tbody = document.getElementById('payouts-table');
-    const approved = drivers.filter(d => d.approval_status === 'approved');
-    if (!approved.length) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>No approved drivers yet</p></div></td></tr>`;
-        return;
-    }
-    tbody.innerHTML = approved.map(d => {
-        const earned = (d.total_tows || 0) * 75; // placeholder
-        const commission = earned * ((d.commission_rate || 15) / 100);
-        const net = earned - commission;
-        return `
-        <tr>
-            <td>
-                <div class="flex-center">
-                    <div class="avatar-sm">${initials(d.user?.first_name, d.user?.last_name)}</div>
-                    <div class="td-name">${d.user?.first_name || ''} ${d.user?.last_name || ''}</div>
-                </div>
-            </td>
-            <td class="td-mono">$${earned.toFixed(2)}</td>
-            <td class="td-mono" style="color:var(--amber);">${d.commission_rate || 15}% · $${commission.toFixed(2)}</td>
-            <td class="td-mono" style="color:var(--green);">$${net.toFixed(2)}</td>
-            <td class="td-mono">${d.total_tows || 0}</td>
-            <td>${d.bank_account_id ? `<span class="badge badge-green">Connected</span>` : `<span class="badge badge-amber">Pending</span>`}</td>
-            <td>
-                <button class="btn btn-ghost btn-sm">View Details</button>
-            </td>
+function renderPending(list) {
+    const tb = document.getElementById('pending-table');
+    if(!list.length){tb.innerHTML=`<tr><td colspan="4" class="empty-cell" style="padding:24px;">🎉 No pending approvals</td></tr>`;return;}
+    tb.innerHTML = list.map(d=>`
+    <tr class="highlight">
+        <td><div style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar av-green" style="width:30px;height:30px;font-size:11px;">${ini(d.user?.first_name,d.user?.last_name)}</div>
+            <div><div class="td-main" style="font-size:13px;">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
+            <div style="font-size:11px;color:#9ca3af;">${d.user?.email||'—'}</div></div>
+        </div></td>
+        <td style="font-size:11px;color:#9ca3af;">${fmt(d.created_at)}</td>
+        <td>${dbadge(d.license_photo_url)} ${dbadge(d.insurance_photo_url)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openModal('${d.id}')">Review →</button></td>
+    </tr>`).join('');
+}
+
+function renderCustomers(list) {
+    const tb = document.getElementById('customers-table');
+    if(!list.length){tb.innerHTML=`<tr><td colspan="6" class="empty-cell">No customers found</td></tr>`;return;}
+    tb.innerHTML = list.map(c=>`
+    <tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar av-blue">${ini(c.first_name,c.last_name)}</div>
+            <div><div class="td-main">${c.first_name||''} ${c.last_name||''}</div>
+            <div style="font-size:11px;color:#9ca3af;">${c.email}</div></div>
+        </div></td>
+        <td class="td-mono">${c.phone||'—'}</td>
+        <td class="td-mono" style="font-weight:600;">${c.total_tows||0}</td>
+        <td style="font-size:11px;color:#9ca3af;">${fmt(c.created_at)}</td>
+        <td><span class="badge ${c.is_active?'bg':'br'}">${c.is_active?'Active':'Suspended'}</span></td>
+        <td>${c.is_active?`<button class="btn btn-al btn-sm" onclick="toggleCust('${c.id}',false)">Suspend</button>`:`<button class="btn btn-gl btn-sm" onclick="toggleCust('${c.id}',true)">Activate</button>`}</td>
+    </tr>`).join('');
+}
+
+function renderTows(list) {
+    const tb = document.getElementById('tows-table');
+    if(!list.length){tb.innerHTML=`<tr><td colspan="8" class="empty-cell">No tow requests</td></tr>`;return;}
+    tb.innerHTML = list.map(t=>`
+    <tr>
+        <td class="td-mono" style="font-size:11px;color:#9ca3af;">${String(t.id).slice(0,8)}…</td>
+        <td>${t.customer?.first_name||'—'} ${t.customer?.last_name||''}</td>
+        <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.pickup_address||'—'}</td>
+        <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.dropoff_address||'—'}</td>
+        <td>${t.driver?.user?.first_name||'—'}</td>
+        <td>${tbadge(t.status)}</td>
+        <td style="font-weight:700;color:#16a34a;">$${parseFloat(t.final_price||t.estimated_price||0).toFixed(2)}</td>
+        <td style="font-size:11px;color:#9ca3af;">${fmt(t.created_at)}</td>
+    </tr>`).join('');
+}
+
+function renderDocs(list) {
+    const tb = document.getElementById('docs-table');
+    if(!list.length){tb.innerHTML=`<tr><td colspan="7" class="empty-cell">No documents</td></tr>`;return;}
+    tb.innerHTML = list.map(d=>`
+    <tr class="${d.approval_status==='pending'?'highlight':''}">
+        <td><div style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar av-green" style="width:30px;height:30px;font-size:11px;">${ini(d.user?.first_name,d.user?.last_name)}</div>
+            <div><div class="td-main" style="font-size:13px;">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
+            <div style="font-size:11px;color:#9ca3af;">${fmt(d.created_at)}</div></div>
+        </div></td>
+        <td class="td-mono">${d.license_number||'—'}</td>
+        <td>${d.license_photo_url?`<a href="${d.license_photo_url}" target="_blank"><span class="badge bg">✓ View</span></a>`:'<span class="badge br">✗ Missing</span>'}</td>
+        <td>${d.insurance_photo_url?`<a href="${d.insurance_photo_url}" target="_blank"><span class="badge bg">✓ View</span></a>`:'<span class="badge br">✗ Missing</span>'}</td>
+        <td><span class="badge bz">N/A</span></td>
+        <td>${sbadge(d.approval_status)}</td>
+        <td><div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="openModal('${d.id}')">Review</button>
+            ${d.approval_status==='pending'?`<button class="btn btn-gl btn-sm" onclick="quick('${d.id}','approve')">Approve</button><button class="btn btn-rl btn-sm" onclick="quick('${d.id}','reject')">Reject</button>`:''}
+        </div></td>
+    </tr>`).join('');
+}
+
+function renderPayouts(list) {
+    const tb = document.getElementById('payouts-table');
+    const approved = list.filter(d=>d.approval_status==='approved');
+    if(!approved.length){tb.innerHTML=`<tr><td colspan="7" class="empty-cell">No approved drivers</td></tr>`;return;}
+    tb.innerHTML = approved.map(d=>{
+        const t=d.total_tows||0, rev=t*85, comm=(d.commission_rate||15)/100, po=rev*(1-comm);
+        return `<tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar av-green">${ini(d.user?.first_name,d.user?.last_name)}</div>
+            <div class="td-main">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
+        </div></td>
+        <td style="font-weight:600;color:#374151;">$${rev.toFixed(2)}</td>
+        <td style="color:#d97706;">${d.commission_rate||15}% · $${(rev*comm).toFixed(2)}</td>
+        <td style="font-weight:700;color:#16a34a;">$${po.toFixed(2)}</td>
+        <td class="td-mono">${t}</td>
+        <td>${d.bank_account_id?'<span class="badge bg">✓ Connected</span>':'<span class="badge ba">Pending</span>'}</td>
+        <td><button class="btn btn-ghost btn-sm">Details</button></td>
         </tr>`;
     }).join('');
 }
 
-// ──────────── ACTIVITY ────────────
-function renderActivity() {
-    const events = generateActivityFromData();
-    const html = events.length ? events.map(e => `
-        <div class="activity-item">
-            <div class="activity-dot" style="background:${e.color}"></div>
-            <div>
-                <div class="activity-text">${e.text}</div>
-                <div class="activity-time">${e.time}</div>
-            </div>
-        </div>
-    `).join('') : `<div class="empty-state"><p>No recent activity</p></div>`;
-
-    document.getElementById('activity-feed').innerHTML = html;
-    document.getElementById('full-activity-feed').innerHTML = html;
+// ── MODAL ──
+function openModal(id) {
+    const d = allDrivers.find(x=>x.id===id); if(!d) return;
+    selectedId = id;
+    set('m-name', `${d.user?.first_name||''} ${d.user?.last_name||''}`);
+    document.getElementById('m-badge').innerHTML = sbadge(d.approval_status);
+    document.getElementById('m-personal').innerHTML = [
+        ['Email',d.user?.email||'—'],['Phone',d.user?.phone||'—'],
+        ['License #',d.license_number||'—'],['State',d.license_state||'—'],
+        ['CDL Class',d.license_class||'—'],['Expiry',fmt(d.license_expiry)],
+        ['Insurance',d.insurance_provider||'—'],['Policy #',d.policy_number||'—'],
+        ['Policy Expiry',fmt(d.policy_expiry)],['Experience',(d.towing_experience_years||'—')+' yrs'],
+    ].map(([l,v])=>`<div class="detail-item"><div class="detail-label">${l}</div><div class="detail-value">${v}</div></div>`).join('');
+    document.getElementById('m-vehicle').innerHTML = [
+        ['Year',d.vehicle_year||'—'],['Make',d.vehicle_make||'—'],
+        ['Model',d.vehicle_model||'—'],['Type',d.vehicle_type||'—'],
+        ['VIN',d.vin||'—'],['Plate',`${d.license_plate||'—'} (${d.plate_state||'—'})`],
+    ].map(([l,v])=>`<div class="detail-item"><div class="detail-label">${l}</div><div class="detail-value" style="font-family:monospace;font-size:13px;">${v}</div></div>`).join('');
+    document.getElementById('m-docs').innerHTML = [
+        ["Driver's License",d.license_photo_url],
+        ['Insurance Cert',d.insurance_photo_url],
+        ['Registration',null],
+    ].map(([l,u])=>`<div class="doc-card ${u?'has-doc':'no-doc'}" ${u?`onclick="window.open('${u}','_blank')"`:''}>
+        <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:8px;">${l}</div>
+        <div style="font-size:13px;font-weight:500;color:${u?'#111827':'#9ca3af'};">${u?'📄 View Document':'⚠ Not uploaded'}</div>
+        <div style="margin-top:8px;">${u?'<span class="badge bg">✓ Uploaded</span>':'<span class="badge br">Missing</span>'}</div>
+    </div>`).join('');
+    document.getElementById('btn-approve').style.display = d.approval_status!=='approved'?'inline-flex':'none';
+    document.getElementById('btn-reject').style.display  = d.approval_status!=='rejected'?'inline-flex':'none';
+    document.getElementById('btn-suspend').style.display = d.approval_status==='approved'?'inline-flex':'none';
+    document.getElementById('driver-modal').classList.add('open');
 }
 
-function generateActivityFromData() {
-    const events = [];
-    allDrivers.slice(0, 5).forEach(d => {
-        events.push({
-            color: d.approval_status === 'pending' ? 'var(--amber)' : 'var(--green)',
-            text: `<strong>${d.user?.first_name || 'Driver'} ${d.user?.last_name || ''}</strong> submitted a driver application`,
-            time: fmtDate(d.created_at)
-        });
-    });
-    allTows.slice(0, 5).forEach(t => {
-        events.push({
-            color: 'var(--blue)',
-            text: `New tow request from <strong>${t.customer?.first_name || 'Customer'}</strong> — ${t.pickup_address?.substring(0,40) || 'Unknown'}`,
-            time: fmtDate(t.created_at)
-        });
-    });
-    return events.slice(0, 10);
+function confirmAction(action) {
+    pendingAction = action;
+    const msgs={approve:'Approve this driver? They can receive tow requests immediately.',reject:'Reject this application? The driver will be notified.',suspend:'Suspend this driver? They will be taken offline immediately.'};
+    const cls={approve:'btn-primary',reject:'btn-rl',suspend:'btn-al'};
+    set('c-title', action.charAt(0).toUpperCase()+action.slice(1)+' Driver');
+    set('c-msg', msgs[action]);
+    document.getElementById('c-reason').value='';
+    const b=document.getElementById('c-btn');
+    b.className=`btn btn-sm ${cls[action]}`;
+    b.textContent=action.charAt(0).toUpperCase()+action.slice(1);
+    document.getElementById('confirm-modal').classList.add('open');
 }
 
-async function loadActivity() { renderActivity(); }
-
-// ──────────── OVERVIEW PENDING TABLE ────────────
-function renderPendingApprovals(pending) {
-    const tbody = document.getElementById('pending-approvals-table');
-    if (!pending.length) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:24px; color:var(--text-dim); font-family:var(--mono); font-size:12px;">No pending approvals 🎉</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = pending.map(d => `
-        <tr>
-            <td>
-                <div class="flex-center">
-                    <div class="avatar-sm">${initials(d.user?.first_name, d.user?.last_name)}</div>
-                    <div class="td-name" style="font-size:13px;">${d.user?.first_name || ''} ${d.user?.last_name || ''}</div>
-                </div>
-            </td>
-            <td style="font-size:11px; color:var(--text-dim);">${fmtDate(d.created_at)}</td>
-            <td>${docStatusBadge(d.license_photo_url)}</td>
-            <td>
-                <div class="action-group">
-                    <button class="btn btn-ghost btn-sm" onclick="openDriverModal('${d.id}')">Review</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+async function executeAction() {
+    if(!selectedId||!pendingAction) return;
+    const map={approve:'approved',reject:'rejected',suspend:'suspended'};
+    const r = await api(`/api/v1/admin/drivers/${selectedId}/status`,{method:'PUT',body:JSON.stringify({approval_status:map[pendingAction],reason:document.getElementById('c-reason').value})});
+    if(r?.ok) {
+        const d=allDrivers.find(x=>x.id===selectedId);
+        if(d){d.approval_status=map[pendingAction];if(pendingAction==='suspend')d.is_online=false;}
+        closeModal('confirm-modal'); closeModal('driver-modal');
+        renderDrivers(allDrivers); renderDocs(allDrivers); renderPayouts(allDrivers);
+        renderPending(allDrivers.filter(d=>d.approval_status==='pending').slice(0,6));
+        badges(); toast(`Driver ${pendingAction}d`,'success');
+    } else { const e=await r?.json().catch(()=>({}))||{}; toast(e.detail||'Failed','error'); }
 }
 
-// ──────────── FILTERS ────────────
-function filterDrivers(query) {
-    const q = (query || document.querySelector('#drivers-table')?.dataset?.query || '').toLowerCase();
-    const statusFilter = document.getElementById('driver-status-filter')?.value || '';
-    const filtered = allDrivers.filter(d => {
-        const name = `${d.user?.first_name || ''} ${d.user?.last_name || ''} ${d.user?.email || ''} ${d.license_number || ''}`.toLowerCase();
-        const matchQ = !q || name.includes(q);
-        const matchS = !statusFilter || d.approval_status === statusFilter;
-        return matchQ && matchS;
-    });
-    renderDriversTable(filtered);
+async function quick(id, action) { selectedId=id; pendingAction=action; document.getElementById('c-reason').value=''; await executeAction(); }
+
+async function toggleCust(id, active) {
+    const r = await api(`/api/v1/admin/users/${id}/status`,{method:'PUT',body:JSON.stringify({is_active:active})});
+    if(r?.ok){const c=allCustomers.find(x=>x.id===id);if(c)c.is_active=active;renderCustomers(allCustomers);toast(active?'Customer activated':'Customer suspended','success');}
 }
 
-function filterDriversByOnline(val) {
-    const filtered = allDrivers.filter(d => {
-        if (val === 'online') return d.is_online;
-        if (val === 'offline') return !d.is_online;
-        return true;
-    });
-    renderDriversTable(filtered);
+// ── ACTIVITY ──
+function buildEvents() {
+    const ev=[];
+    allDrivers.slice(0,8).forEach(d=>ev.push({color:d.approval_status==='pending'?'#f59e0b':'#22c55e',text:`<strong>${d.user?.first_name||'Driver'} ${d.user?.last_name||''}</strong> submitted a driver application`,time:fmt(d.created_at)}));
+    allTows.slice(0,8).forEach(t=>ev.push({color:'#3b82f6',text:`New tow request from <strong>${t.customer?.first_name||'Customer'}</strong> — ${(t.pickup_address||'').substring(0,40)}`,time:fmt(t.created_at)}));
+    return ev.slice(0,15);
+}
+function actItem(e){return`<div class="act-item"><div class="act-dot" style="background:${e.color}"></div><div><div style="font-size:13px;color:#374151;line-height:1.5;">${e.text}</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">${e.time}</div></div></div>`;}
+function renderActivityMini(){const ev=buildEvents();document.getElementById('activity-mini').innerHTML=ev.length?ev.slice(0,6).map(actItem).join(''):'<div class="empty-cell">No recent activity</div>';}
+function renderFullActivity(){const ev=buildEvents();document.getElementById('full-activity').innerHTML=ev.length?ev.map(actItem).join(''):'<div class="empty-cell">No activity</div>';}
+
+// ── FILTERS ──
+function filterDrivers(q){
+    const s=document.querySelector('#view-drivers .filter-select')?.value||'';
+    renderDrivers(allDrivers.filter(d=>{
+        const t=`${d.user?.first_name||''} ${d.user?.last_name||''} ${d.user?.email||''} ${d.license_number||''}`.toLowerCase();
+        return t.includes(q.toLowerCase())&&(!s||d.approval_status===s);
+    }));
+}
+function filterByStatus(s){filterDrivers(document.querySelector('#view-drivers input')?.value||'');}
+function filterByOnline(v){renderDrivers(allDrivers.filter(d=>!v||(v==='online'?d.is_online:!d.is_online)));}
+function filterCustomers(q){renderCustomers(allCustomers.filter(c=>`${c.first_name||''} ${c.last_name||''} ${c.email||''}`.toLowerCase().includes(q.toLowerCase())));}
+function filterTows(s){renderTows(s?allTows.filter(t=>t.status===s):allTows);}
+
+// ── HELPERS ──
+function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+function ini(f,l){return((f?.[0]||'')+(l?.[0]||'')).toUpperCase()||'?';}
+function fmt(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function sbadge(s){const m={pending:'ba',approved:'bg',rejected:'br',suspended:'ba'};return`<span class="badge ${m[s]||'bz'}">${s||'—'}</span>`;}
+function tbadge(s){const m={pending:'ba',accepted:'bb',en_route_pickup:'bb',vehicle_loaded:'bb',en_route_dropoff:'bb',completed:'bg',cancelled:'br'};return`<span class="badge ${m[s]||'bz'}">${(s||'—').replace(/_/g,' ')}</span>`;}
+function dbadge(u){return u?`<span class="badge bg">✓</span>`:`<span class="badge br">✗</span>`;}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function refreshAll(){allDrivers=[];allCustomers=[];allTows=[];loadOverview();toast('Refreshing...','info');}
+function logout(){localStorage.removeItem('auth_token');window.location.href='index.html';}
+
+function toast(msg, type='info') {
+    const el=document.createElement('div');
+    el.className=`toast ${type}`;
+    const i={success:'✓',error:'✗',info:'ℹ'};
+    el.innerHTML=`<span style="font-weight:700;font-size:16px;">${i[type]}</span>${msg}`;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(()=>el.remove(),3500);
 }
 
-function filterCustomers(query) {
-    const q = query.toLowerCase();
-    const filtered = allCustomers.filter(c =>
-        `${c.first_name || ''} ${c.last_name || ''} ${c.email || ''}`.toLowerCase().includes(q)
-    );
-    renderCustomersTable(filtered);
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+async function loadAdminInfo() {
+    const r=await api('/api/v1/auth/me');
+    if(r?.ok){const u=await r.json();set('admin-name',u.first_name||u.email);document.getElementById('admin-avatar').textContent=((u.first_name?.[0]||'')+(u.last_name?.[0]||'')).toUpperCase()||'A';}
 }
 
-function filterTows(status) {
-    const filtered = status ? allTows.filter(t => t.status === status) : allTows;
-    renderTowsTable(filtered);
-}
-
-// ──────────── SPARKLINE ────────────
-function renderSparkline(id, max) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const bars = Array.from({length: 7}, (_, i) => Math.floor(Math.random() * max + 1));
-    const m = Math.max(...bars);
-    el.innerHTML = bars.map(v => `
-        <div class="spark-bar" style="height:${Math.round((v/m)*100)}%"></div>
-    `).join('');
-}
-
-// ──────────── UTILS ────────────
-function initials(first, last) {
-    return ((first?.[0] || '') + (last?.[0] || '')).toUpperCase() || '?';
-}
-
-function fmtDate(d) {
-    if (!d) return '—';
-    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function statusBadge(s) {
-    const map = {
-        pending: 'badge-amber',
-        approved: 'badge-green',
-        rejected: 'badge-red',
-        suspended: 'badge-amber',
-    };
-    return `<span class="badge ${map[s] || 'badge-dim'}">${s || '—'}</span>`;
-}
-
-function towStatusBadge(s) {
-    const map = {
-        pending: 'badge-amber',
-        accepted: 'badge-blue',
-        en_route_pickup: 'badge-blue',
-        vehicle_loaded: 'badge-blue',
-        en_route_dropoff: 'badge-blue',
-        completed: 'badge-green',
-        cancelled: 'badge-red',
-    };
-    return `<span class="badge ${map[s] || 'badge-dim'}">${(s || '—').replace(/_/g,' ')}</span>`;
-}
-
-function docStatusBadge(url) {
-    return url
-        ? `<span class="badge badge-green">✓ Uploaded</span>`
-        : `<span class="badge badge-red">✗ Missing</span>`;
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
-}
-
-function showToast(msg, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const icons = { success: '✓', error: '✗', info: 'ℹ' };
-    toast.innerHTML = `<span style="font-weight:700;">${icons[type]}</span> ${msg}`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
-}
-
-function refreshAll() {
-    allDrivers = []; allCustomers = []; allTows = [];
-    loadOverview();
-    showToast('Data refreshed', 'info');
-}
-
-function logout() {
-    localStorage.removeItem('auth_token');
-    window.location.href = 'admin-login.html';
-}
-
-// close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(o => {
-    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-});
-
-// ──────────── INIT ────────────
+loadAdminInfo();
 loadOverview();
-
-// Auto-refresh every 60s
-setInterval(() => { allDrivers = []; allCustomers = []; allTows = []; loadOverview(); }, 60000);
+setInterval(()=>{allDrivers=[];allCustomers=[];allTows=[];loadOverview();},60000);
 </script>
 </body>
 </html>
