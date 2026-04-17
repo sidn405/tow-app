@@ -30,6 +30,15 @@
 </head>
 <body class="bg-white">
     <style>
+        /* Hamburger — show only on mobile */
+        #ham-btn { display: none; }
+        .desktop-nav { display: flex; }
+
+        @media (max-width: 767px) {
+            #ham-btn { display: flex; flex-direction: column; gap: 5px; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; cursor: pointer; background: none; border: none; }
+            .desktop-nav { display: none !important; }
+        }
+
         /* Mobile menu transition */
         #mobile-menu {
             max-height: 0;
@@ -38,10 +47,11 @@
             opacity: 0;
         }
         #mobile-menu.open {
-            max-height: 500px;
+            max-height: 520px;
             opacity: 1;
         }
-        /* Hamburger animation */
+
+        /* Hamburger bar animation */
         .ham-line {
             display: block;
             width: 22px;
@@ -51,9 +61,14 @@
             transition: all 0.25s ease;
             transform-origin: center;
         }
-        #ham-btn.open .ham-line:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        #ham-btn.open .ham-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
         #ham-btn.open .ham-line:nth-child(2) { opacity: 0; transform: scaleX(0); }
-        #ham-btn.open .ham-line:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+        #ham-btn.open .ham-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* Hide mobile menu on desktop */
+        @media (min-width: 768px) {
+            #mobile-menu { display: none !important; }
+        }
     </style>
 
     <!-- Navigation -->
@@ -69,7 +84,7 @@
                 </a>
 
                 <!-- Desktop nav -->
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="desktop-nav items-center space-x-8">
                     <a href="#how-it-works" class="text-gray-600 hover:text-primary-600 transition">How It Works</a>
                     <a href="#features" class="text-gray-600 hover:text-primary-600 transition">Features</a>
                     <a href="#pricing" class="text-gray-600 hover:text-primary-600 transition">Pricing</a>
@@ -79,7 +94,7 @@
                 </div>
 
                 <!-- Hamburger button (mobile only) -->
-                <button id="ham-btn" onclick="toggleMobileMenu()" class="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-gray-100 transition" aria-label="Toggle menu">
+                <button id="ham-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
                     <span class="ham-line"></span>
                     <span class="ham-line"></span>
                     <span class="ham-line"></span>
@@ -88,21 +103,17 @@
         </div>
 
         <!-- Mobile menu dropdown -->
-        <div id="mobile-menu" class="md:hidden border-t border-gray-100 bg-white">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1">
-                <a href="#how-it-works" onclick="closeMobileMenu()" class="px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">How It Works</a>
-                <a href="#features" onclick="closeMobileMenu()" class="px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">Features</a>
-                <a href="#pricing" onclick="closeMobileMenu()" class="px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">Pricing</a>
-                <div class="h-px bg-gray-100 my-1"></div>
-                <a href="customer-login.html" class="px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">Sign In</a>
-                <a href="driver-login.html" class="px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">Driver Sign In</a>
-                <div class="h-px bg-gray-100 my-1"></div>
-                <a href="customer-register.html" class="mx-1 mb-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold text-center hover:bg-primary-700 transition">
-                    Get Started — Request a Tow
-                </a>
-                <a href="driver-register.html" class="mx-1 mb-2 px-4 py-3 bg-primary-50 text-primary-600 rounded-lg font-semibold text-center hover:bg-primary-100 transition border border-primary-200">
-                    Drive for TowNow
-                </a>
+        <div id="mobile-menu" style="background:white; border-top: 1px solid #f3f4f6;">
+            <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;">
+                <a href="#how-it-works" onclick="closeMobileMenu()" style="padding:12px 16px; color:#374151; border-radius:8px; font-weight:500; text-decoration:none; display:block;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">How It Works</a>
+                <a href="#features" onclick="closeMobileMenu()" style="padding:12px 16px; color:#374151; border-radius:8px; font-weight:500; text-decoration:none; display:block;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">Features</a>
+                <a href="#pricing" onclick="closeMobileMenu()" style="padding:12px 16px; color:#374151; border-radius:8px; font-weight:500; text-decoration:none; display:block;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">Pricing</a>
+                <div style="height:1px; background:#f3f4f6; margin: 4px 0;"></div>
+                <a href="customer-login.html" style="padding:12px 16px; color:#374151; border-radius:8px; font-weight:500; text-decoration:none; display:block;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">Sign In</a>
+                <a href="driver-login.html" style="padding:12px 16px; color:#374151; border-radius:8px; font-weight:500; text-decoration:none; display:block;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">Driver Sign In</a>
+                <div style="height:1px; background:#f3f4f6; margin: 4px 0;"></div>
+                <a href="customer-register.html" style="margin: 4px 0; padding:13px 16px; background:#4f46e5; color:white; border-radius:10px; font-weight:700; text-align:center; text-decoration:none; display:block;">🚛 Request a Tow</a>
+                <a href="driver-register.html" style="margin-bottom: 4px; padding:13px 16px; background:#eef2ff; color:#4f46e5; border-radius:10px; font-weight:700; text-align:center; text-decoration:none; display:block; border: 1px solid #c7d2fe;">⚡ Drive for TowNow</a>
             </div>
         </div>
     </nav>
@@ -119,14 +130,8 @@
             document.getElementById('mobile-menu').classList.remove('open');
             document.getElementById('ham-btn').classList.remove('open');
         }
-        // Close on outside click
         document.addEventListener('click', function(e) {
-            const nav = document.querySelector('nav');
-            if (!nav.contains(e.target)) closeMobileMenu();
-        });
-        // Close on anchor scroll
-        document.querySelectorAll('#mobile-menu a[href^="#"]').forEach(a => {
-            a.addEventListener('click', () => setTimeout(closeMobileMenu, 100));
+            if (!document.querySelector('nav').contains(e.target)) closeMobileMenu();
         });
     </script>
 
