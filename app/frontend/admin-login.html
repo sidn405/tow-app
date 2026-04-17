@@ -19,7 +19,7 @@
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background: var(--dark);
+            background: var(--primary-dark);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -79,7 +79,7 @@
 
         /* Card header band */
         .card-band {
-            background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 100%);
             padding: 32px 36px 28px;
             position: relative;
             overflow: hidden;
@@ -152,7 +152,7 @@
             margin-bottom: 7px;
         }
 
-        .field-label .req { color: var(--brand); margin-left: 2px; }
+        .field-label .req { color: var(--primary-brand); margin-left: 2px; }
 
         input[type="email"],
         input[type="password"] {
@@ -169,7 +169,7 @@
         }
 
         input:focus {
-            border-color: var(--brand);
+            border-color: var(--primary-brand);
             background: white;
             box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
         }
@@ -203,7 +203,7 @@
         .submit-btn {
             width: 100%;
             padding: 13px;
-            background: linear-gradient(135deg, var(--brand), #4338ca);
+            background: linear-gradient(135deg, var(--primary-brand), #4338ca);
             color: white;
             border: none;
             border-radius: 12px;
