@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Driver Dashboard - TowNow</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        #driver-map { width: 100%; height: 420px; border-radius: 8px; }
+        .mapboxgl-popup-content { border-radius: 10px !important; padding: 12px 14px !important; font-family: sans-serif; min-width: 180px; }
+        .req-marker { width: 32px; height: 32px; background: #f59e0b; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(245,158,11,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
+        .req-marker:hover { transform: scale(1.2); }
+        .driver-loc-marker { width: 40px; height: 40px; background: linear-gradient(135deg, #4f46e5, #6366f1); border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 16px rgba(79,70,229,0.5); display: flex; align-items: center; justify-content: center; }
+        .driver-loc-marker::after { content: ''; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(99,102,241,0.2); animation: driverPulse 2s infinite; }
+        @keyframes driverPulse { 0%,100%{transform:scale(1);opacity:0.5;} 50%{transform:scale(1.3);opacity:0;} }
+    </style>
     <script>
         tailwind.config = {
             theme: {
@@ -73,6 +84,28 @@
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <div class="text-sm text-gray-600 mb-1">Total Tows</div>
                 <div class="text-2xl font-bold text-gray-900" id="totalTows">0</div>
+            </div>
+        </div>
+
+        <!-- Map Panel -->
+        <div class="bg-white rounded-lg shadow-lg mb-8 overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-lg font-bold text-gray-900">Your Location</h2>
+                    <span id="map-status-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Offline</span>
+                </div>
+                <button onclick="centerOnMe()" class="text-sm text-primary-600 font-semibold hover:text-primary-700 flex items-center gap-1">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
+                    Center
+                </button>
+            </div>
+            <div id="driver-map"></div>
+            <div id="map-route-info" class="hidden p-4 bg-indigo-50 border-t border-indigo-100">
+                <div class="flex items-center gap-3 text-sm">
+                    <svg width="16" height="16" fill="none" stroke="#4f46e5" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
+                    <span id="route-distance" class="font-semibold text-indigo-700"></span>
+                    <span class="text-indigo-500" id="route-eta"></span>
+                </div>
             </div>
         </div>
 
@@ -241,7 +274,7 @@
             }
 
             try {
-                await apifetch('/api/v1/drivers/toggle-online', {  // <-- correct endpoint
+                await apiFetch('/api/v1/drivers/toggle-online', {  // <-- correct endpoint
                     method: 'POST',                              // <-- POST not PUT
                     headers: {
                         'Content-Type': 'application/json',
@@ -344,14 +377,172 @@
             window.location.href = 'index.html';
         }
 
+        // ── MAP ──
+        let driverMap = null;
+        let driverMarker = null;
+        let requestMarkers = [];
+        let routeLayerId = 'active-route';
+        let watchId = null;
+        let mapboxToken = null;
+        let currentLng = -90.0715, currentLat = 29.9511;
+
+        async function initDriverMap() {
+            try {
+                const r = await fetch('/api/v1/config/mapbox-token');
+                if (r.ok) { const d = await r.json(); mapboxToken = d.mapbox_token; }
+            } catch(e) {}
+
+            if (!mapboxToken) {
+                document.getElementById('driver-map').innerHTML = '<div style="height:420px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:14px;">Map unavailable</div>';
+                return;
+            }
+
+            mapboxgl.accessToken = mapboxToken;
+            driverMap = new mapboxgl.Map({
+                container: 'driver-map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: [currentLng, currentLat],
+                zoom: 13
+            });
+
+            driverMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+            // Driver location marker
+            const el = document.createElement('div');
+            el.className = 'driver-loc-marker';
+            el.style.position = 'relative';
+            el.innerHTML = `<svg width="18" height="18" fill="white" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+            driverMarker = new mapboxgl.Marker(el).setLngLat([currentLng, currentLat]).addTo(driverMap);
+
+            // Watch GPS position
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(pos => {
+                    currentLat = pos.coords.latitude;
+                    currentLng = pos.coords.longitude;
+                    driverMarker.setLngLat([currentLng, currentLat]);
+
+                    // Send location to backend when online
+                    if (isOnline) {
+                        apiFetch('/api/v1/drivers/location', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ latitude: currentLat, longitude: currentLng })
+                        }).catch(() => {});
+                    }
+                }, err => console.warn('GPS error:', err), { enableHighAccuracy: true, maximumAge: 10000 });
+            }
+        }
+
+        function centerOnMe() {
+            if (driverMap && driverMarker) {
+                driverMap.flyTo({ center: driverMarker.getLngLat(), zoom: 14, duration: 800 });
+            }
+        }
+
+        function plotRequestsOnMap(requests) {
+            if (!driverMap) return;
+            // Clear old markers
+            requestMarkers.forEach(m => m.remove());
+            requestMarkers = [];
+
+            requests.forEach(req => {
+                if (!req.pickup_longitude || !req.pickup_latitude) return;
+                const el = document.createElement('div');
+                el.className = 'req-marker';
+                el.innerHTML = `<svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg>`;
+
+                const popup = new mapboxgl.Popup({ offset: 18, closeButton: false })
+                    .setHTML(`
+                        <div style="font-family:sans-serif;">
+                            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">Tow Request</div>
+                            <div style="font-size:12px;color:#6b7280;">${req.pickup_address||''}</div>
+                            <div style="font-size:12px;color:#6b7280;">→ ${req.dropoff_address||''}</div>
+                            <div style="font-weight:700;color:#4f46e5;margin-top:6px;font-size:14px;">$${req.driver_payout||req.quoted_price||''}</div>
+                            <div style="font-size:11px;color:#9ca3af;">${req.distance_miles||''} mi away</div>
+                        </div>
+                    `);
+
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat([parseFloat(req.pickup_longitude), parseFloat(req.pickup_latitude)])
+                    .setPopup(popup)
+                    .addTo(driverMap);
+
+                requestMarkers.push(marker);
+            });
+
+            // Fit to show driver + all requests
+            if (requests.length > 0) {
+                const coords = [[currentLng, currentLat], ...requests.filter(r => r.pickup_longitude).map(r => [parseFloat(r.pickup_longitude), parseFloat(r.pickup_latitude)])];
+                const bounds = coords.reduce((b, c) => b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0]));
+                driverMap.fitBounds(bounds, { padding: 80, maxZoom: 14 });
+            }
+        }
+
+        async function drawActiveRoute(pickupLat, pickupLng, dropoffLat, dropoffLng) {
+            if (!driverMap || !mapboxToken) return;
+            try {
+                const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${currentLng},${currentLat};${pickupLng},${pickupLat};${dropoffLng},${dropoffLat}?geometries=geojson&access_token=${mapboxToken}`;
+                const r = await fetch(url);
+                const data = await r.json();
+                if (!data.routes?.length) return;
+
+                const route = data.routes[0];
+                const geom = route.geometry;
+                const distMi = (route.distance / 1609.34).toFixed(1);
+                const mins = Math.round(route.duration / 60);
+
+                document.getElementById('map-route-info').classList.remove('hidden');
+                document.getElementById('route-distance').textContent = `${distMi} mi total route`;
+                document.getElementById('route-eta').textContent = `~${mins} min`;
+
+                if (driverMap.getSource(routeLayerId)) {
+                    driverMap.getSource(routeLayerId).setData(geom);
+                } else {
+                    driverMap.addSource(routeLayerId, { type: 'geojson', data: geom });
+                    driverMap.addLayer({ id: routeLayerId + '-bg', type: 'line', source: routeLayerId, paint: { 'line-color': '#c7d2fe', 'line-width': 6, 'line-opacity': 0.6 }});
+                    driverMap.addLayer({ id: routeLayerId, type: 'line', source: routeLayerId, paint: { 'line-color': '#4f46e5', 'line-width': 3 }});
+                }
+
+                // Fit to route
+                const bounds = geom.coordinates.reduce((b, c) => b.extend(c), new mapboxgl.LngLatBounds(geom.coordinates[0], geom.coordinates[0]));
+                driverMap.fitBounds(bounds, { padding: 80 });
+            } catch(e) { console.error('Route error:', e); }
+        }
+
+        function updateMapStatusBadge(online) {
+            const badge = document.getElementById('map-status-badge');
+            if (online) {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700';
+                badge.textContent = 'Online — Broadcasting Location';
+            } else {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500';
+                badge.textContent = 'Offline';
+            }
+        }
+
+        // Hook into toggleOnline to update map badge
+        const _origToggle = toggleOnline;
+        async function toggleOnline() {
+            await _origToggle();
+            updateMapStatusBadge(isOnline);
+        }
+
+        // Hook into displayRequests to also plot on map
+        const _origDisplay = displayRequests;
+        function displayRequests(requests) {
+            _origDisplay(requests);
+            plotRequestsOnMap(requests);
+        }
+
+        // Init map on load
+        initDriverMap();
+
         // Load profile on page load
         loadProfile();
 
         // Refresh requests every 30 seconds when online
         setInterval(() => {
-            if (isOnline) {
-                loadAvailableRequests();
-            }
+            if (isOnline) loadAvailableRequests();
         }, 30000);
     </script>
 </body>

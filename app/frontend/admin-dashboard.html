@@ -6,6 +6,8 @@
     <title>Admin Console - TowNow</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
         :root {
             --primary-brand: #4f46e5;
@@ -195,6 +197,46 @@
         .toast.error   { border-left: 4px solid #ef4444; }
         .toast.info    { border-left: 4px solid #3b82f6; }
 
+        /* ── MAP ── */
+        #admin-map { width: 100%; height: 520px; border-radius: 12px; }
+        .map-driver-marker {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .map-driver-marker:hover { transform: scale(1.15); }
+        .map-driver-marker.online { background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 4px 12px rgba(22,163,74,0.4); }
+        .map-tow-marker {
+            width: 28px; height: 28px;
+            background: #f59e0b;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .map-legend {
+            display: flex; gap: 16px; align-items: center;
+            padding: 10px 16px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #374151;
+        }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .mapboxgl-popup-content {
+            border-radius: 10px !important;
+            padding: 14px 16px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+            font-family: 'DM Sans', sans-serif !important;
+            min-width: 200px;
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f9fafb; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
@@ -239,6 +281,10 @@
         </div>
 
         <div class="nav-group-label">Operations</div>
+        <div class="nav-item" onclick="showView('livemap',this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Live Map
+        </div>
         <div class="nav-item" onclick="showView('tows',this)">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             Tow Requests
@@ -342,6 +388,43 @@
                 <div class="card">
                     <div class="card-header"><div class="card-title">Recent Activity</div></div>
                     <div id="activity-mini"><div class="empty-cell">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ LIVE MAP ══ -->
+        <div class="view" id="view-livemap">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                <div>
+                    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#0f1a13;">Live Map</h2>
+                    <p style="font-size:13px;color:#9ca3af;margin-top:2px;">Real-time driver locations and active tows</p>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div class="map-legend">
+                        <span class="legend-dot" style="background:#4f46e5;"></span> Driver (offline)
+                        <span class="legend-dot" style="background:#22c55e;"></span> Driver (online)
+                        <span class="legend-dot" style="background:#f59e0b;"></span> Active tow
+                        <span class="legend-dot" style="background:#ef4444;"></span> Pickup
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="refreshAdminMap()">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;">
+                <div class="card" style="overflow:hidden;">
+                    <div id="admin-map"></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div class="card" style="padding:16px;">
+                        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#0f1a13;margin-bottom:12px;">Online Drivers</div>
+                        <div id="map-drivers-list" style="font-size:13px;color:#9ca3af;">Loading...</div>
+                    </div>
+                    <div class="card" style="padding:16px;">
+                        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#0f1a13;margin-bottom:12px;">Active Tows</div>
+                        <div id="map-tows-list" style="font-size:13px;color:#9ca3af;">Loading...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -874,9 +957,174 @@ async function loadAdminInfo() {
     if(r?.ok){const u=await r.json();set('admin-name',u.first_name||u.email);document.getElementById('admin-avatar').textContent=((u.first_name?.[0]||'')+(u.last_name?.[0]||'')).toUpperCase()||'A';}
 }
 
-loadAdminInfo();
-loadOverview();
-setInterval(()=>{allDrivers=[];allCustomers=[];allTows=[];loadOverview();},60000);
+// ── MAP ──
+let adminMap = null;
+let adminMapToken = null;
+let mapDriverMarkers = {};
+let mapTowMarkers = {};
+
+async function getMapboxToken() {
+    if (adminMapToken) return adminMapToken;
+    try {
+        const r = await fetch('/api/v1/config/mapbox-token');
+        if (r.ok) { const d = await r.json(); adminMapToken = d.mapbox_token; }
+    } catch(e) { console.error('Failed to get mapbox token', e); }
+    return adminMapToken;
+}
+
+async function initAdminMap() {
+    const token = await getMapboxToken();
+    if (!token) { document.getElementById('admin-map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:520px;color:#9ca3af;font-size:14px;">Map unavailable — Mapbox token not configured</div>'; return; }
+
+    mapboxgl.accessToken = token;
+    adminMap = new mapboxgl.Map({
+        container: 'admin-map',
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [-90.0715, 29.9511], // New Orleans default
+        zoom: 11
+    });
+
+    adminMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    adminMap.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+
+    adminMap.on('load', () => { populateAdminMap(); });
+}
+
+function populateAdminMap() {
+    if (!adminMap) return;
+
+    // Clear existing markers
+    Object.values(mapDriverMarkers).forEach(m => m.remove());
+    Object.values(mapTowMarkers).forEach(m => m.remove());
+    mapDriverMarkers = {}; mapTowMarkers = {};
+
+    const driversList = document.getElementById('map-drivers-list');
+    const towsList = document.getElementById('map-tows-list');
+
+    // Plot drivers
+    const onlineDrivers = allDrivers.filter(d => d.current_latitude && d.current_longitude);
+    if (onlineDrivers.length === 0) {
+        driversList.innerHTML = '<div style="color:#9ca3af;font-size:12px;">No drivers with location data</div>';
+    } else {
+        driversList.innerHTML = onlineDrivers.map(d => `
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;" onclick="flyToDriver('${d.id}')">
+                <div style="width:8px;height:8px;border-radius:50%;background:${d.is_online?'#22c55e':'#9ca3af'};flex-shrink:0;"></div>
+                <div>
+                    <div style="font-weight:600;color:#111827;font-size:12px;">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
+                    <div style="font-size:11px;color:#9ca3af;">${d.vehicle_make||''} ${d.vehicle_model||''}</div>
+                </div>
+            </div>`).join('');
+    }
+
+    onlineDrivers.forEach(d => {
+        const el = document.createElement('div');
+        el.className = `map-driver-marker ${d.is_online ? 'online' : ''}`;
+        el.innerHTML = `<svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`;
+
+        const popup = new mapboxgl.Popup({ offset: 20, closeButton: false })
+            .setHTML(`
+                <div style="font-family:'DM Sans',sans-serif;">
+                    <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
+                    <div style="font-size:12px;color:#6b7280;">${d.vehicle_year||''} ${d.vehicle_make||''} ${d.vehicle_model||''}</div>
+                    <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+                        <span style="width:8px;height:8px;border-radius:50%;background:${d.is_online?'#22c55e':'#9ca3af'};display:inline-block;"></span>
+                        <span style="font-size:12px;font-weight:600;color:${d.is_online?'#16a34a':'#6b7280'};">${d.is_online?'Online':'Offline'}</span>
+                    </div>
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">Rating: ${d.rating||'5.0'} ⭐ · ${d.total_tows||0} tows</div>
+                </div>
+            `);
+
+        const marker = new mapboxgl.Marker(el)
+            .setLngLat([parseFloat(d.current_longitude), parseFloat(d.current_latitude)])
+            .setPopup(popup)
+            .addTo(adminMap);
+
+        mapDriverMarkers[d.id] = marker;
+    });
+
+    // Plot active tows
+    const activeTows = allTows.filter(t => ['searching','accepted','en_route_pickup','vehicle_loaded','en_route_dropoff'].includes(t.status) && t.pickup_longitude && t.pickup_latitude);
+    if (activeTows.length === 0) {
+        towsList.innerHTML = '<div style="color:#9ca3af;font-size:12px;">No active tows</div>';
+    } else {
+        towsList.innerHTML = activeTows.map(t => `
+            <div style="padding:6px 0;border-bottom:1px solid #f3f4f6;">
+                <div style="font-weight:600;color:#111827;font-size:12px;">${t.customer?.first_name||'Customer'}</div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${(t.pickup_address||'').substring(0,30)}…</div>
+                <span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#fef3c7;color:#b45309;">${(t.status||'').replace(/_/g,' ')}</span>
+            </div>`).join('');
+    }
+
+    activeTows.forEach(t => {
+        // Pickup marker
+        const el = document.createElement('div');
+        el.className = 'map-tow-marker';
+        el.innerHTML = `<svg width="12" height="12" fill="white" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg>`;
+        const popup = new mapboxgl.Popup({ offset: 16, closeButton: false })
+            .setHTML(`<div style="font-family:'DM Sans',sans-serif;font-size:13px;"><strong>${t.customer?.first_name||'Customer'}</strong><br><span style="color:#6b7280;font-size:11px;">${t.pickup_address||''}</span><br><span style="font-weight:600;color:#4f46e5;">$${t.quoted_price||''}</span></div>`);
+
+        new mapboxgl.Marker(el)
+            .setLngLat([parseFloat(t.pickup_longitude), parseFloat(t.pickup_latitude)])
+            .setPopup(popup)
+            .addTo(adminMap);
+
+        // Draw route line if we have dropoff coords
+        if (t.dropoff_latitude && t.dropoff_longitude && adminMap.getStyle()) {
+            const sourceId = `route-${t.id}`;
+            if (!adminMap.getSource(sourceId)) {
+                adminMap.addSource(sourceId, { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [
+                    [parseFloat(t.pickup_longitude), parseFloat(t.pickup_latitude)],
+                    [parseFloat(t.dropoff_longitude), parseFloat(t.dropoff_latitude)]
+                ]}}});
+                adminMap.addLayer({ id: sourceId, type: 'line', source: sourceId, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#4f46e5', 'line-width': 2, 'line-dasharray': [2,2], 'line-opacity': 0.5 }});
+            }
+        }
+    });
+
+    // Fit bounds to show all markers
+    const allCoords = [
+        ...onlineDrivers.map(d => [parseFloat(d.current_longitude), parseFloat(d.current_latitude)]),
+        ...activeTows.map(t => [parseFloat(t.pickup_longitude), parseFloat(t.pickup_latitude)])
+    ].filter(c => !isNaN(c[0]) && !isNaN(c[1]));
+
+    if (allCoords.length > 0) {
+        const bounds = allCoords.reduce((b, c) => b.extend(c), new mapboxgl.LngLatBounds(allCoords[0], allCoords[0]));
+        adminMap.fitBounds(bounds, { padding: 80, maxZoom: 14 });
+    }
+}
+
+function flyToDriver(driverId) {
+    const marker = mapDriverMarkers[driverId];
+    if (marker && adminMap) {
+        adminMap.flyTo({ center: marker.getLngLat(), zoom: 14, duration: 800 });
+        marker.togglePopup();
+    }
+}
+
+function refreshAdminMap() {
+    if (adminMap) populateAdminMap();
+}
+
+// Override showView to init map on first load
+const _origShowView = showView;
+function showView(name, el) {
+    _origShowView(name, el);
+    if (name === 'livemap') {
+        if (!adminMap) {
+            setTimeout(() => initAdminMap(), 100);
+        } else {
+            populateAdminMap();
+        }
+    }
+}
+
+// Auto-refresh map every 30s when on map view
+setInterval(() => {
+    const mapView = document.getElementById('view-livemap');
+    if (mapView && mapView.classList.contains('active') && adminMap) {
+        populateAdminMap();
+    }
+}, 30000);
 </script>
 </body>
 </html>
