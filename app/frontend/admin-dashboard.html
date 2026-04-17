@@ -540,6 +540,7 @@ function showView(name, el) {
     if(name==='customers') loadCustomers();
     if(name==='tows') loadTows();
     if(name==='activity') renderFullActivity();
+    if(name==='payouts') loadPayouts();
 }
 
 async function api(path, opts={}) {
@@ -552,7 +553,7 @@ async function api(path, opts={}) {
 }
 
 async function loadOverview() {
-    const [dr,cu,to] = await Promise.all([api('/api/v1/admin/drivers'), api('/api/v1/admin/customers'), api('/api/v1/admin/tows')]);
+    const [dr,cu,to] = await Promise.all([api('/api/v1/admin/drivers'), api('/api/v1/admin/customers'), api('/api/v1/admin/tows'), api('/api/v1/admin/payouts')]);
     if(dr?.ok) {
         allDrivers = await dr.json();
         const online = allDrivers.filter(d=>d.is_online).length;
@@ -569,14 +570,26 @@ async function loadOverview() {
         set('s-customers', allCustomers.length);
         renderCustomers(allCustomers);
     }
-    if(to?.ok) {
+    if (to?.ok) {
         allTows = await to.json();
-        const active = allTows.filter(t=>['pending','accepted','en_route_pickup','vehicle_loaded','en_route_dropoff'].includes(t.status)).length;
-        const today = allTows.filter(t=>t.status==='completed' && new Date(t.updated_at).toDateString()===new Date().toDateString()).length;
-        const rev = allTows.filter(t=>t.status==='completed').reduce((s,t)=>s+parseFloat(t.final_price||0),0);
-        set('s-tows', active); set('active-count', active);
-        set('s-today', today+' completed today');
-        set('s-rev','$'+rev.toLocaleString('en-US',{maximumFractionDigits:0}));
+        const active = allTows.filter(t => [
+            'searching', 'pending', 'accepted', 
+            'en_route_pickup', 'vehicle_loaded', 'en_route_dropoff'
+        ].includes(t.status)).length;
+        
+        const today = allTows.filter(t => 
+            t.status === 'completed' && 
+            new Date(t.updated_at).toDateString() === new Date().toDateString()
+        ).length;
+        
+        const rev = allTows
+            .filter(t => t.status === 'completed')
+            .reduce((s, t) => s + parseFloat(t.quoted_price || t.final_price || 0), 0);
+        
+        set('s-tows', active);
+        set('active-count', active);
+        set('s-today', today + ' completed today');
+        set('s-rev', '$' + rev.toLocaleString('en-US', { maximumFractionDigits: 0 }));
         renderTows(allTows);
     }
     renderActivityMini();
@@ -675,7 +688,7 @@ function renderTows(list) {
         <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.dropoff_address||'—'}</td>
         <td>${t.driver?.user?.first_name||'—'}</td>
         <td>${tbadge(t.status)}</td>
-        <td style="font-weight:700;color:#16a34a;">$${parseFloat(t.final_price||t.estimated_price||0).toFixed(2)}</td>
+        <td style="font-weight:700;color:#16a34a;">$${parseFloat(t.quoted_price||t.final_price||0).toFixed(2)}</td>
         <td style="font-size:11px;color:#9ca3af;">${fmt(t.created_at)}</td>
     </tr>`).join('');
 }
@@ -702,25 +715,44 @@ function renderDocs(list) {
     </tr>`).join('');
 }
 
-function renderPayouts(list) {
+// Add this new function
+async function loadPayouts() {
+    const res = await api('/api/v1/admin/payouts');
+    if (res?.ok) {
+        const data = await res.json();
+        renderPayoutsReal(data);
+    }
+}
+
+// Replace renderPayouts(allDrivers) with this real renderer
+function renderPayoutsReal(list) {
     const tb = document.getElementById('payouts-table');
-    const approved = list.filter(d=>d.approval_status==='approved');
-    if(!approved.length){tb.innerHTML=`<tr><td colspan="7" class="empty-cell">No approved drivers</td></tr>`;return;}
-    tb.innerHTML = approved.map(d=>{
-        const t=d.total_tows||0, rev=t*85, comm=(d.commission_rate||15)/100, po=rev*(1-comm);
-        return `<tr>
-        <td><div style="display:flex;align-items:center;gap:10px;">
-            <div class="avatar av-green">${ini(d.user?.first_name,d.user?.last_name)}</div>
-            <div class="td-main">${d.user?.first_name||''} ${d.user?.last_name||''}</div>
-        </div></td>
-        <td style="font-weight:600;color:#374151;">$${rev.toFixed(2)}</td>
-        <td style="color:#d97706;">${d.commission_rate||15}% · $${(rev*comm).toFixed(2)}</td>
-        <td style="font-weight:700;color:#16a34a;">$${po.toFixed(2)}</td>
-        <td class="td-mono">${t}</td>
-        <td>${d.bank_account_id?'<span class="badge bg">✓ Connected</span>':'<span class="badge ba">Pending</span>'}</td>
-        <td><button class="btn btn-ghost btn-sm">Details</button></td>
-        </tr>`;
-    }).join('');
+    if (!list.length) {
+        tb.innerHTML = `<tr><td colspan="7" class="empty-cell">No approved drivers yet</td></tr>`;
+        return;
+    }
+    tb.innerHTML = list.map(d => `
+        <tr>
+            <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="avatar av-green">${ini(d.driver?.first_name, d.driver?.last_name)}</div>
+                    <div>
+                        <div class="td-main">${d.driver?.first_name||''} ${d.driver?.last_name||''}</div>
+                        <div style="font-size:11px;color:#9ca3af;">${d.driver?.email||'—'}</div>
+                    </div>
+                </div>
+            </td>
+            <td style="font-weight:600;color:#374151;">$${d.total_revenue.toFixed(2)}</td>
+            <td style="color:#d97706;">${d.commission_rate}% · $${d.commission_earned.toFixed(2)}</td>
+            <td style="font-weight:700;color:#16a34a;">$${d.total_payout.toFixed(2)}</td>
+            <td class="td-mono">${d.total_tows}</td>
+            <td>${d.bank_account_id
+                ? '<span class="badge bg">✓ Connected</span>'
+                : '<span class="badge ba">Pending Setup</span>'
+            }</td>
+            <td><button class="btn btn-ghost btn-sm">Details</button></td>
+        </tr>
+    `).join('');
 }
 
 // ── MODAL ──
