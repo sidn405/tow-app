@@ -7,152 +7,222 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script>
+        tailwind.config = { theme: { extend: { colors: { primary: {
+            50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',
+            400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81'
+        }}}}}
+    </script>
     <style>
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #tracking-map { width:100%; height:calc(100vh - 210px); min-height:400px; }
+        .mapboxgl-popup-content { border-radius:10px!important; padding:12px 14px!important; font-family:sans-serif; min-width:180px; }
+        .driver-marker { width:44px; height:44px; background:linear-gradient(135deg,#4f46e5,#6366f1); border-radius:50%; border:3px solid white; box-shadow:0 4px 16px rgba(79,70,229,0.5); display:flex; align-items:center; justify-content:center; position:relative; }
+        .driver-marker::after { content:''; position:absolute; width:64px; height:64px; border-radius:50%; background:rgba(99,102,241,0.2); animation:ping 2s infinite; }
+        @keyframes ping { 0%,100%{transform:scale(1);opacity:0.5;} 50%{transform:scale(1.4);opacity:0;} }
     </style>
 </head>
-<body>
-    <div id="map"></div>
-    
-    <!-- Status Card Overlay -->
-    <div class="absolute top-4 left-4 right-4 bg-white rounded-lg shadow-xl p-4 z-10 max-w-md">
-        <h2 class="text-xl font-bold text-gray-800 mb-2">🚗 Your Tow</h2>
-        <div id="statusInfo">
-            <div class="animate-pulse">Loading tracking info...</div>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <svg class="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="text-xl font-bold text-gray-900">TowNow</span>
+            </a>
+            <button onclick="history.back()" class="text-sm text-gray-500 hover:text-gray-800">← Back</button>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 py-4">
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">🚛 Your Tow</h1>
+                    <p class="text-sm text-gray-500 mt-1" id="status-message">Loading tracking info...</p>
+                </div>
+                <span id="status-badge" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold"></span>
+            </div>
+            <!-- Steps -->
+            <div class="flex items-center">
+                <div class="flex-1 text-center" id="step-searching">
+                    <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-white mx-auto mb-1 step-num">1</div>
+                    <div class="text-xs text-gray-400 step-label">Finding</div>
+                </div>
+                <div class="flex-1 h-0.5 bg-gray-200 step-line"></div>
+                <div class="flex-1 text-center" id="step-accepted">
+                    <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-white mx-auto mb-1 step-num">2</div>
+                    <div class="text-xs text-gray-400 step-label">Accepted</div>
+                </div>
+                <div class="flex-1 h-0.5 bg-gray-200 step-line"></div>
+                <div class="flex-1 text-center" id="step-en_route_pickup">
+                    <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-white mx-auto mb-1 step-num">3</div>
+                    <div class="text-xs text-gray-400 step-label">En Route</div>
+                </div>
+                <div class="flex-1 h-0.5 bg-gray-200 step-line"></div>
+                <div class="flex-1 text-center" id="step-vehicle_loaded">
+                    <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-white mx-auto mb-1 step-num">4</div>
+                    <div class="text-xs text-gray-400 step-label">Loaded</div>
+                </div>
+                <div class="flex-1 h-0.5 bg-gray-200 step-line"></div>
+                <div class="flex-1 text-center" id="step-completed">
+                    <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-white mx-auto mb-1 step-num">5</div>
+                    <div class="text-xs text-gray-400 step-label">Done</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
+            <div id="tracking-map"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-600 text-lg" id="driver-initials">?</div>
+                <div>
+                    <div class="font-semibold text-gray-900" id="driver-name">Loading driver...</div>
+                    <div class="text-sm text-gray-500" id="driver-vehicle">—</div>
+                    <div class="flex items-center gap-1 mt-1">
+                        <span class="text-yellow-400 text-sm">⭐</span>
+                        <span class="text-sm font-semibold text-gray-700" id="driver-rating">—</span>
+                        <span class="text-sm text-gray-400" id="driver-tows"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-2xl font-bold text-indigo-600" id="eta-display">—</div>
+                <div class="text-xs text-gray-400">estimated arrival</div>
+                <div class="text-sm font-semibold text-gray-700 mt-1" id="price-display"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        let map;
-        let driverMarker;
-        let pickupMarker;
-        let dropoffMarker;
-        let trackingInterval;
         const towId = new URLSearchParams(window.location.search).get('id');
+        const authToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+        let trackingMap = null, driverMarker = null, pickupMarker = null, dropoffMarker = null;
+        let mapToken = null, pollInterval = null;
 
-        async function initMap() {
-            // Get Mapbox token
-            const tokenRes = await fetch('/api/v1/config/mapbox-token');
-            const tokenData = await tokenRes.json();
-            mapboxgl.accessToken = tokenData.token;
-
-            // Initialize map
-            map = new mapboxgl.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/streets-v12',
-                center: [-90.0715, 29.9511], // New Orleans
-                zoom: 10
-            });
-
-            // Start tracking
-            updateTracking();
-            trackingInterval = setInterval(updateTracking, 10000); // Update every 10 seconds
-        }
-
-        async function updateTracking() {
+        // ALWAYS fetch token before initializing map
+        async function getMapToken() {
+            if (mapToken) return mapToken;
             try {
-                const response = await fetch(`/api/v1/tows/${towId}/tracking`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const r = await fetch('/api/v1/config/mapbox-token');
+                if (r.ok) { const d = await r.json(); mapToken = d.mapbox_token; }
+            } catch(e) {}
+            return mapToken;
+        }
 
-                const data = await response.json();
+        async function initMap(tow) {
+            const mb = await getMapToken(); // fetch FIRST
+            if (!mb) {
+                document.getElementById('tracking-map').innerHTML =
+                    '<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:14px;padding:20px;text-align:center;">Map unavailable — Mapbox token not configured</div>';
+                return;
+            }
 
-                // Update status card
-                document.getElementById('statusInfo').innerHTML = `
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600">Status:</span>
-                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                ${formatStatus(data.status)}
-                            </span>
-                        </div>
-                        ${data.driver_info ? `
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Driver:</span>
-                                <span class="font-medium">${data.driver_info.name}</span>
-                            </div>
-                        ` : ''}
-                        <div class="text-sm text-gray-600">
-                            📍 Pickup: ${data.pickup_location.address}
-                        </div>
-                        <div class="text-sm text-gray-600">
-                            🏁 Dropoff: ${data.dropoff_location.address}
-                        </div>
-                    </div>
-                `;
+            mapboxgl.accessToken = mb; // set BEFORE new Map()
+            const center = tow.pickup_longitude
+                ? [parseFloat(tow.pickup_longitude), parseFloat(tow.pickup_latitude)]
+                : [-90.0715, 29.9511];
 
-                // Update markers
-                if (data.driver_location.latitude && data.driver_location.longitude) {
-                    const driverLngLat = [data.driver_location.longitude, data.driver_location.latitude];
-                    
-                    if (driverMarker) {
-                        driverMarker.setLngLat(driverLngLat);
-                    } else {
-                        // Create driver marker (truck icon)
-                        const el = document.createElement('div');
-                        el.className = 'driver-marker';
-                        el.innerHTML = '🚚';
-                        el.style.fontSize = '30px';
-                        
-                        driverMarker = new mapboxgl.Marker(el)
-                            .setLngLat(driverLngLat)
-                            .addTo(map);
-                    }
+            trackingMap = new mapboxgl.Map({ container: 'tracking-map', style: 'mapbox://styles/mapbox/streets-v12', center, zoom: 13 });
+            trackingMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+            trackingMap.on('load', () => { updateMarkers(tow); drawRoute(tow, mb); });
+        }
 
-                    // Center map on driver
-                    map.flyTo({center: driverLngLat, zoom: 13});
+        function makeEl(color, icon) {
+            const el = document.createElement('div');
+            el.style.cssText = `width:32px;height:32px;background:${color};border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;`;
+            el.innerHTML = icon;
+            return el;
+        }
+
+        function updateMarkers(tow) {
+            if (!trackingMap) return;
+            if (tow.pickup_latitude && tow.pickup_longitude) {
+                if (pickupMarker) pickupMarker.remove();
+                pickupMarker = new mapboxgl.Marker(makeEl('#ef4444', `<svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg>`))
+                    .setLngLat([parseFloat(tow.pickup_longitude), parseFloat(tow.pickup_latitude)])
+                    .setPopup(new mapboxgl.Popup({closeButton:false}).setHTML(`<strong>📍 Pickup</strong><br><span style="font-size:12px;color:#6b7280;">${tow.pickup_address||''}</span>`))
+                    .addTo(trackingMap);
+            }
+            if (tow.dropoff_latitude && tow.dropoff_longitude) {
+                if (dropoffMarker) dropoffMarker.remove();
+                dropoffMarker = new mapboxgl.Marker(makeEl('#4f46e5', `<svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`))
+                    .setLngLat([parseFloat(tow.dropoff_longitude), parseFloat(tow.dropoff_latitude)])
+                    .setPopup(new mapboxgl.Popup({closeButton:false}).setHTML(`<strong>🏁 Drop-off</strong><br><span style="font-size:12px;color:#6b7280;">${tow.dropoff_address||''}</span>`))
+                    .addTo(trackingMap);
+            }
+            if (tow.driver?.current_latitude && tow.driver?.current_longitude) {
+                const dLat = parseFloat(tow.driver.current_latitude), dLng = parseFloat(tow.driver.current_longitude);
+                if (driverMarker) {
+                    driverMarker.setLngLat([dLng, dLat]);
+                    trackingMap.easeTo({ center: [dLng, dLat], duration: 1200 });
+                } else {
+                    const el = document.createElement('div');
+                    el.className = 'driver-marker';
+                    el.innerHTML = `<svg width="20" height="20" fill="white" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+                    driverMarker = new mapboxgl.Marker(el).setLngLat([dLng, dLat]).addTo(trackingMap);
+                    trackingMap.flyTo({ center: [dLng, dLat], zoom: 14 });
                 }
-
-                // Add pickup marker
-                if (!pickupMarker) {
-                    pickupMarker = new mapboxgl.Marker({color: '#22c55e'})
-                        .setLngLat([data.pickup_location.longitude, data.pickup_location.latitude])
-                        .setPopup(new mapboxgl.Popup().setHTML('<p>📍 Pickup Location</p>'))
-                        .addTo(map);
-                }
-
-                // Add dropoff marker
-                if (!dropoffMarker) {
-                    dropoffMarker = new mapboxgl.Marker({color: '#ef4444'})
-                        .setLngLat([data.dropoff_location.longitude, data.dropoff_location.latitude])
-                        .setPopup(new mapboxgl.Popup().setHTML('<p>🏁 Dropoff Location</p>'))
-                        .addTo(map);
-                }
-
-                // Draw route line (optional)
-                if (data.driver_location.latitude && map.getSource('route')) {
-                    // Update route
-                }
-
-            } catch (error) {
-                console.error('Error updating tracking:', error);
             }
         }
 
-        function formatStatus(status) {
-            const labels = {
-                'accepted': 'Driver Assigned',
-                'en_route_pickup': 'Driver En Route',
-                'arrived_pickup': 'Driver Arrived',
-                'vehicle_loaded': 'Vehicle Loaded',
-                'en_route_dropoff': 'Heading to Dropoff',
-                'arrived_dropoff': 'Arrived at Destination',
-                'completed': 'Tow Completed'
-            };
-            return labels[status] || status;
+        async function drawRoute(tow, mb) {
+            if (!tow.pickup_latitude || !tow.dropoff_latitude) return;
+            try {
+                const r = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${tow.pickup_longitude},${tow.pickup_latitude};${tow.dropoff_longitude},${tow.dropoff_latitude}?geometries=geojson&access_token=${mb}`);
+                const data = await r.json();
+                if (!data.routes?.length) return;
+                const geom = data.routes[0].geometry;
+                document.getElementById('eta-display').textContent = `~${Math.round(data.routes[0].duration / 60)} min`;
+                if (!trackingMap.getSource('route')) {
+                    trackingMap.addSource('route', { type: 'geojson', data: geom });
+                    trackingMap.addLayer({ id: 'route-bg', type: 'line', source: 'route', paint: { 'line-color': '#c7d2fe', 'line-width': 8, 'line-opacity': 0.5 }});
+                    trackingMap.addLayer({ id: 'route', type: 'line', source: 'route', paint: { 'line-color': '#4f46e5', 'line-width': 4 }});
+                } else { trackingMap.getSource('route').setData(geom); }
+                const bounds = geom.coordinates.reduce((b, c) => b.extend(c), new mapboxgl.LngLatBounds(geom.coordinates[0], geom.coordinates[0]));
+                trackingMap.fitBounds(bounds, { padding: 80 });
+            } catch(e) {}
         }
 
-        // Initialize
-        initMap();
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (trackingInterval) {
-                clearInterval(trackingInterval);
+        function updateUI(tow) {
+            const msgs = { searching:'Looking for a nearby driver...', accepted:'Driver accepted — heading to you!', en_route_pickup:'Driver is on the way', arrived_pickup:'Driver has arrived!', vehicle_loaded:'Vehicle loaded — heading to drop-off', en_route_dropoff:'Almost there...', completed:'✅ Delivered!', cancelled:'This tow was cancelled.' };
+            document.getElementById('status-message').textContent = msgs[tow.status] || tow.status;
+            document.getElementById('status-badge').textContent = (tow.status||'').replace(/_/g,' ').replace(/\b\w/g, l=>l.toUpperCase());
+            if (tow.quoted_price) document.getElementById('price-display').textContent = `$${tow.quoted_price}`;
+            if (tow.driver) {
+                const d = tow.driver;
+                document.getElementById('driver-name').textContent = `${d.user?.first_name||''} ${d.user?.last_name||''}`.trim() || 'Driver';
+                document.getElementById('driver-vehicle').textContent = [d.vehicle_year,d.vehicle_make,d.vehicle_model].filter(Boolean).join(' ') || '—';
+                document.getElementById('driver-initials').textContent = ((d.user?.first_name?.[0]||'')+(d.user?.last_name?.[0]||'')).toUpperCase()||'?';
+                document.getElementById('driver-rating').textContent = d.rating||'5.0';
+                document.getElementById('driver-tows').textContent = `· ${d.total_tows||0} tows`;
             }
-        });
+            const order = ['searching','accepted','en_route_pickup','vehicle_loaded','completed'];
+            const idx = order.indexOf(tow.status);
+            document.querySelectorAll('[id^="step-"]').forEach((el, i) => {
+                const num = el.querySelector('.step-num'), label = el.querySelector('.step-label');
+                if (i < idx) { num.style.background='#22c55e'; label.style.color='#16a34a'; }
+                else if (i === idx) { num.style.background='#4f46e5'; label.style.color='#4f46e5'; label.style.fontWeight='700'; }
+            });
+        }
+
+        async function loadTow() {
+            if (!towId || !authToken) return;
+            try {
+                const r = await fetch(`/api/v1/tows/${towId}`, { headers: { 'Authorization': `Bearer ${authToken}` }});
+                if (!r.ok) return;
+                const tow = await r.json();
+                updateUI(tow);
+                if (!trackingMap) { await initMap(tow); } else { updateMarkers(tow); }
+                if (['completed','cancelled'].includes(tow.status)) clearInterval(pollInterval);
+            } catch(e) { console.error('Load tow error:', e); }
+        }
+
+        loadTow();
+        pollInterval = setInterval(loadTow, 10000);
     </script>
 </body>
 </html>

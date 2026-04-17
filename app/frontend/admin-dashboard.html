@@ -625,6 +625,10 @@ function showView(name, el) {
     if(name==='tows') loadTows();
     if(name==='activity') renderFullActivity();
     if(name==='payouts') loadPayouts();
+    if(name==='livemap') {
+        if (!adminMap) { setTimeout(() => initAdminMap(), 100); }
+        else { populateAdminMap(); }
+    }
 }
 
 async function api(path, opts={}) {
@@ -1103,19 +1107,6 @@ function flyToDriver(driverId) {
 
 function refreshAdminMap() {
     if (adminMap) populateAdminMap();
-}
-
-// Override showView to init map on first load
-const _origShowView = showView;
-function showView(name, el) {
-    _origShowView(name, el);
-    if (name === 'livemap') {
-        if (!adminMap) {
-            setTimeout(() => initAdminMap(), 100);
-        } else {
-            populateAdminMap();
-        }
-    }
 }
 
 // Auto-refresh map every 30s when on map view

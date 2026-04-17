@@ -841,22 +841,40 @@
             document.getElementById('tracking-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // Check for active tow on load and auto-start tracking
+        // Check for active tow on load and auto-start inline tracking
         async function checkForActiveTow() {
             try {
-                const r = await fetch('/api/v1/tows/driver/active', { headers: { 'Authorization': `Bearer ${token}` }});
+                // Use customer history endpoint and find most recent active tow
+                const authToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                if (!authToken) return;
+                const r = await fetch('/api/v1/tows/customer/history', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
                 if (r.ok) {
-                    const tow = await r.json();
-                    if (tow && tow.id && !['completed','cancelled'].includes(tow.status)) {
-                        initCustomerMap(tow);
+                    const tows = await r.json();
+                    const activeTow = Array.isArray(tows)
+                        ? tows.find(t => !['completed','cancelled'].includes(t.status))
+                        : null;
+                    if (activeTow && activeTow.id) {
+                        initCustomerMap(activeTow);
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.error('checkForActiveTow error:', e); }
+        }
+
+        // Override trackTow — use inline map instead of new tab
+        function trackTow(towId) {
+            startTrackingTow(towId);
+            setTimeout(() => {
+                const section = document.getElementById('tracking-section');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
         }
 
         // Logout
         function logout() {
             localStorage.removeItem('token');
+            localStorage.removeItem('auth_token');
             window.location.href = 'customer-login.html';
         }
 
@@ -866,10 +884,6 @@
             initMapbox();
             checkForActiveTow();
         });
-
-        function trackTow(towId) {
-            window.open(`/tracking.html?id=${towId}`, '_blank');
-        }
 
         // At the bottom of your script
         window.addEventListener('DOMContentLoaded', () => {
