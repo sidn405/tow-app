@@ -1103,7 +1103,7 @@ function populateAdminMap() {
                 </div>
             `);
 
-        const marker = new mapboxgl.Marker(el)
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
             .setLngLat([parseFloat(d.current_longitude), parseFloat(d.current_latitude)])
             .setPopup(popup)
             .addTo(adminMap);
